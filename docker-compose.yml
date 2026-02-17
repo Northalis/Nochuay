@@ -1,0 +1,86 @@
+services:
+  # 1. PostgreSQL Database
+  db:
+    image: postgres:17-alpine
+    container_name: nochuay_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Database Migrations
+  migrate:
+    build:
+      context: ./nochuay-back
+      dockerfile: Dockerfile
+      target: dev
+    container_name: nochuay_migrate
+    env_file:
+      - ./nochuay-back/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./nochuay-back/migrations:/app/migrations
+    entrypoint:
+      [
+        "migrate",
+        "-path",
+        "/app/migrations",
+        "-database",
+        "postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable",
+        "up",
+      ]
+    restart: "no"
+
+  # 3. Go Backend API
+  app:
+    build:
+      context: ./nochuay-back
+      dockerfile: Dockerfile
+      target: dev
+    container_name: nochuay_api
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./nochuay-back/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./nochuay-back:/app
+      - go_modules:/go/pkg/mod
+
+  # 4. Next.js Frontend
+  frontend:
+    image: node:22-alpine
+    container_name: nochuay_frontend
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./nochuay-front/.env.local
+    volumes:
+      - ./nochuay-front:/app
+      - frontend_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - app
+
+volumes:
+  postgres_data:
+  go_modules:
+  frontend_node_modules:
