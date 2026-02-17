@@ -26,15 +26,27 @@ jobs:
         with:
           go-version-file: ./nochuay-back/go.mod
           cache-dependency-path: ./nochuay-back/go.sum
+        env:
+          GONOSUMDB: nochuay.app
+          GONOPROXY: nochuay.app
 
       - name: Go Vet
         run: go vet ./...
+        env:
+          GONOSUMDB: nochuay.app
+          GONOPROXY: nochuay.app
 
       - name: Go Test
         run: go test -v ./...
+        env:
+          GONOSUMDB: nochuay.app
+          GONOPROXY: nochuay.app
 
       - name: Go Build
         run: go build -o bin/api ./cmd/api
+        env:
+          GONOSUMDB: nochuay.app
+          GONOPROXY: nochuay.app
 
   # ============================
   # Job 2: Frontend (Next.js)
