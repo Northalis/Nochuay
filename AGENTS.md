@@ -207,14 +207,15 @@ All responses must follow this wrapper format:
 
 ## **Endpoint:**
 
-Method | Endpoint | Description | Request Body|Response Data
-POST | /auth/signup | Register user | "{email, password}" | "{token, user}"
-POST | /auth/login|Login user | "{email, password}" | "{token, user}"
-GET | /pages/sidebar | Critical: Returns nested tree | - | "[PageNode, PageNode...]"
-POST | /pages|Create new page | "{parentId, title}" | Page
-GET | /pages/:id|Get page details | - | Page
-PATCH | /pages/:id|Update properties | "{title, icon, content}" | Page
-DELETE | /pages/:id|Delete page & children | - | {success: true}
+| Method | Endpoint | Description | Request Body|Response Data |
+|------|--------------|---------------|---------------------|--------------------------|
+| POST | /auth/signup | Register user | "{email, password}" | "{token, user}" |
+| POST | /auth/login|Login user | "{email, password}" | "{token, user}" |
+| GET | /pages/sidebar | Critical: Returns nested tree | - | "[PageNode, PageNode...]" |
+| POST | /pages|Create new page | "{parentId, title}" | Page |
+| GET | /pages/:id|Get page details | - | Page |
+| PATCH | /pages/:id|Update properties | "{title, icon, content}" | Page |
+| DELETE | /pages/:id|Delete page & children | - | {success: true} |
 
 ---
 
