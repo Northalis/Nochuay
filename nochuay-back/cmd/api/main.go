@@ -6,7 +6,10 @@ import (
 
 	"nochuay.app/api/internal/config"
 	"nochuay.app/api/internal/db"
+	"nochuay.app/api/internal/handler"
 	"nochuay.app/api/internal/handler/response"
+	"nochuay.app/api/internal/repository"
+	"nochuay.app/api/internal/service"
 )
 
 func main() {
@@ -24,7 +27,12 @@ func main() {
 	defer pool.Close()
 	log.Println("Connected to database")
 
-	// 3. Setup router
+	// 3. Initialize layers (Repository -> Service -> Handler)
+	userRepo := repository.NewUserRepository(pool)
+	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
+	authHandler := handler.NewAuthHandler(authService)
+
+	// 4. Setup router
 	mux := http.NewServeMux()
 
 	// Health check
@@ -32,12 +40,16 @@ func main() {
 		response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	// 4. CORS middleware
-	handler := corsMiddleware(mux, cfg.CORSAllowedOrigins)
+	// Auth routes (public)
+	mux.HandleFunc("POST /auth/signup", authHandler.Signup)
+	mux.HandleFunc("POST /auth/login", authHandler.Login)
 
-	// 5. Start server
+	// 5. CORS middleware
+	corsHandler := corsMiddleware(mux, cfg.CORSAllowedOrigins)
+
+	// 6. Start server
 	log.Printf("Nochuay API server starting on :%s", cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, handler); err != nil {
+	if err := http.ListenAndServe(":"+cfg.Port, corsHandler); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
 }
