@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -17,6 +18,8 @@ type PageRepository interface {
 	UpdatePage(ctx context.Context, userID, pageID uuid.UUID, updates map[string]any) (*model.Page, error)
 	DeletePage(ctx context.Context, userID, pageID uuid.UUID) error
 	GetPagesByUserID(ctx context.Context, userID uuid.UUID) ([]model.Page, error)
+	SaveContent(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error)
+	GetContent(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error)
 }
 
 type pageRepository struct {
@@ -170,4 +173,42 @@ func (r *pageRepository) GetPagesByUserID(ctx context.Context, userID uuid.UUID)
 	}
 
 	return pages, nil
+}
+
+// SaveContent replaces the content JSONB column for a specific page.
+func (r *pageRepository) SaveContent(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error) {
+	var page model.Page
+	err := r.pool.QueryRow(ctx,
+		`UPDATE pages SET content = $1, updated_at = NOW()
+		 WHERE id = $2 AND user_id = $3
+		 RETURNING id, user_id, parent_id, title, icon, cover_image, content, is_published, created_at, updated_at`,
+		content, pageID, userID,
+	).Scan(
+		&page.ID, &page.UserID, &page.ParentID, &page.Title,
+		&page.Icon, &page.CoverImage, &page.Content, &page.IsPublished,
+		&page.CreatedAt, &page.UpdatedAt,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to save content: %w", err)
+	}
+	return &page, nil
+}
+
+// GetContent returns only the content JSONB for a specific page.
+func (r *pageRepository) GetContent(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error) {
+	var content json.RawMessage
+	err := r.pool.QueryRow(ctx,
+		`SELECT content FROM pages WHERE id = $1 AND user_id = $2`,
+		pageID, userID,
+	).Scan(&content)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get content: %w", err)
+	}
+	return content, nil
 }

@@ -59,6 +59,8 @@ func main() {
 	mux.Handle("GET /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.GetPage)))
 	mux.Handle("PATCH /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.UpdatePage)))
 	mux.Handle("DELETE /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.DeletePage)))
+	mux.Handle("PUT /pages/{id}/content", authMiddleware(http.HandlerFunc(pageHandler.SaveContent)))
+	mux.Handle("GET /pages/{id}/content", authMiddleware(http.HandlerFunc(pageHandler.GetContent)))
 
 	// 5. CORS middleware
 	corsHandler := corsMiddleware(mux, cfg.CORSAllowedOrigins)

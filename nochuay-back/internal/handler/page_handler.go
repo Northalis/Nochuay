@@ -150,6 +150,73 @@ func (h *PageHandler) UpdatePage(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, page)
 }
 
+// SaveContent handles PUT /pages/{id}/content.
+// Accepts a raw BlockNote JSON array and saves it as the page content.
+func (h *PageHandler) SaveContent(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	pageID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid page id format")
+		return
+	}
+
+	// Read the raw JSON body as-is (BlockNote JSON array)
+	var content json.RawMessage
+	if err := json.NewDecoder(r.Body).Decode(&content); err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+
+	page, err := h.pageService.SaveContent(r.Context(), userID, pageID, content)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			response.Error(w, http.StatusNotFound, "page not found")
+			return
+		}
+		if strings.Contains(err.Error(), "valid JSON") || strings.Contains(err.Error(), "JSON array") {
+			response.Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to save content")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, page)
+}
+
+// GetContent handles GET /pages/{id}/content.
+// Returns only the content field for a page (lightweight fetch for the editor).
+func (h *PageHandler) GetContent(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	pageID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid page id format")
+		return
+	}
+
+	content, err := h.pageService.GetContent(r.Context(), userID, pageID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			response.Error(w, http.StatusNotFound, "page not found")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to get content")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, content)
+}
+
 // GetSidebar handles GET /pages/sidebar.
 func (h *PageHandler) GetSidebar(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())

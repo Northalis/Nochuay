@@ -17,6 +17,8 @@ type PageService interface {
 	UpdatePage(ctx context.Context, userID, pageID uuid.UUID, updates map[string]any) (*model.Page, error)
 	DeletePage(ctx context.Context, userID, pageID uuid.UUID) error
 	GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error)
+	SaveContent(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error)
+	GetContent(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error)
 }
 
 type pageService struct {
@@ -110,6 +112,41 @@ func (s *pageService) DeletePage(ctx context.Context, userID, pageID uuid.UUID) 
 		return fmt.Errorf("failed to delete page: %w", err)
 	}
 	return nil
+}
+
+// SaveContent validates and saves editor content (BlockNote JSON array) to a page.
+func (s *pageService) SaveContent(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error) {
+	// Validate the content is a valid JSON array
+	if !json.Valid(content) {
+		return nil, fmt.Errorf("content must be valid JSON")
+	}
+
+	// Ensure content is a JSON array (BlockNote stores blocks as an array)
+	var arr []json.RawMessage
+	if err := json.Unmarshal(content, &arr); err != nil {
+		return nil, fmt.Errorf("content must be a JSON array of blocks")
+	}
+
+	page, err := s.pageRepo.SaveContent(ctx, userID, pageID, content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save content: %w", err)
+	}
+	if page == nil {
+		return nil, fmt.Errorf("page not found")
+	}
+	return page, nil
+}
+
+// GetContent returns just the editor content for a page.
+func (s *pageService) GetContent(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error) {
+	content, err := s.pageRepo.GetContent(ctx, userID, pageID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get content: %w", err)
+	}
+	if content == nil {
+		return nil, fmt.Errorf("page not found")
+	}
+	return content, nil
 }
 
 // GetSidebarTree fetches all pages for a user and constructs a nested tree.

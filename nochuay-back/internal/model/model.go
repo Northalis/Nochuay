@@ -16,6 +16,21 @@ type User struct {
 }
 
 // Page represents a single page/document.
+//
+// The Content field stores a BlockNote editor JSON array as JSONB.
+// Schema for block content (BlockNote format):
+//
+//	[
+//	  {
+//	    "id":       "string",              // Unique block identifier
+//	    "type":     "string",              // Block type: paragraph, heading, bulletListItem, numberedListItem, checkListItem, image, table, codeBlock, etc.
+//	    "props":    { ... },               // Type-specific properties (e.g., textAlignment, level for headings, url for images)
+//	    "content":  [ { "type": "text", "text": "...", "styles": { ... } }, ... ],  // Inline content array
+//	    "children": [ ... ]                // Nested child blocks (same schema, recursive)
+//	  }
+//	]
+//
+// An empty page has content = []  (empty JSON array).
 type Page struct {
 	ID          uuid.UUID       `json:"id"`
 	UserID      uuid.UUID       `json:"userId"`
