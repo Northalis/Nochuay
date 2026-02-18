@@ -16,6 +16,7 @@ type PageService interface {
 	GetPage(ctx context.Context, userID, pageID uuid.UUID) (*model.Page, error)
 	UpdatePage(ctx context.Context, userID, pageID uuid.UUID, updates map[string]any) (*model.Page, error)
 	DeletePage(ctx context.Context, userID, pageID uuid.UUID) error
+	GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error)
 }
 
 type pageService struct {
@@ -110,3 +111,66 @@ func (s *pageService) DeletePage(ctx context.Context, userID, pageID uuid.UUID) 
 	}
 	return nil
 }
+
+// GetSidebarTree fetches all pages for a user and constructs a nested tree.
+func (s *pageService) GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error) {
+	pages, err := s.pageRepo.GetPagesByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pages: %w", err)
+	}
+	return BuildTree(pages), nil
+}
+
+// BuildTree constructs a nested PageNode tree from a flat list of pages.
+// Exported for unit testing.
+func BuildTree(pages []model.Page) []model.PageNode {
+	if len(pages) == 0 {
+		return []model.PageNode{}
+	}
+
+	// Create a map of ID -> *treeNode using pointers for mutable children
+	type treeNode struct {
+		page     model.Page
+		children []*treeNode
+	}
+
+	nodeMap := make(map[uuid.UUID]*treeNode, len(pages))
+	for _, p := range pages {
+		cp := p
+		nodeMap[cp.ID] = &treeNode{page: cp}
+	}
+
+	// Build parent-child relationships via pointers
+	var roots []*treeNode
+	for _, p := range pages {
+		node := nodeMap[p.ID]
+		if p.ParentID == nil {
+			roots = append(roots, node)
+		} else if parent, exists := nodeMap[*p.ParentID]; exists {
+			parent.children = append(parent.children, node)
+		} else {
+			// Orphan: parent not in list, treat as root
+			roots = append(roots, node)
+		}
+	}
+
+	// Recursively convert to PageNode values with depth
+	var materialize func(nodes []*treeNode, depth int) []model.PageNode
+	materialize = func(nodes []*treeNode, depth int) []model.PageNode {
+		result := make([]model.PageNode, 0, len(nodes))
+		for _, n := range nodes {
+			pn := model.PageNode{
+				Page:     n.page,
+				Children: materialize(n.children, depth+1),
+				Depth:    depth,
+			}
+			result = append(result, pn)
+		}
+		return result
+	}
+
+	return materialize(roots, 0)
+}
+
+// setDepths is no longer needed but kept for reference.
+// Depth is now set during materialization.

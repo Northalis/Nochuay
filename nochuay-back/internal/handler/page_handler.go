@@ -150,6 +150,23 @@ func (h *PageHandler) UpdatePage(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, page)
 }
 
+// GetSidebar handles GET /pages/sidebar.
+func (h *PageHandler) GetSidebar(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	tree, err := h.pageService.GetSidebarTree(r.Context(), userID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "failed to load sidebar")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, tree)
+}
+
 // DeletePage handles DELETE /pages/{id}.
 func (h *PageHandler) DeletePage(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
