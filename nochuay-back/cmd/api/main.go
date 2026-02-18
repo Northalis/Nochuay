@@ -8,6 +8,7 @@ import (
 	"nochuay.app/api/internal/db"
 	"nochuay.app/api/internal/handler"
 	"nochuay.app/api/internal/handler/response"
+	"nochuay.app/api/internal/middleware"
 	"nochuay.app/api/internal/repository"
 	"nochuay.app/api/internal/service"
 )
@@ -29,8 +30,16 @@ func main() {
 
 	// 3. Initialize layers (Repository -> Service -> Handler)
 	userRepo := repository.NewUserRepository(pool)
+	pageRepo := repository.NewPageRepository(pool)
+
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
+	pageService := service.NewPageService(pageRepo)
+
 	authHandler := handler.NewAuthHandler(authService)
+	pageHandler := handler.NewPageHandler(pageService)
+
+	// Auth middleware
+	authMiddleware := middleware.Auth(authService)
 
 	// 4. Setup router
 	mux := http.NewServeMux()
@@ -43,6 +52,12 @@ func main() {
 	// Auth routes (public)
 	mux.HandleFunc("POST /auth/signup", authHandler.Signup)
 	mux.HandleFunc("POST /auth/login", authHandler.Login)
+
+	// Page routes (protected)
+	mux.Handle("POST /pages", authMiddleware(http.HandlerFunc(pageHandler.CreatePage)))
+	mux.Handle("GET /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.GetPage)))
+	mux.Handle("PATCH /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.UpdatePage)))
+	mux.Handle("DELETE /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.DeletePage)))
 
 	// 5. CORS middleware
 	corsHandler := corsMiddleware(mux, cfg.CORSAllowedOrigins)
