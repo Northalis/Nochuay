@@ -6,9 +6,8 @@ import { BlockNoteView } from "@blocknote/mantine";
 import { Block } from "@blocknote/core";
 import { apiFetch } from "@/lib/api";
 
-// @ts-expect-error -- CSS module without type declarations
 import "@blocknote/core/fonts/inter.css";
-// @ts-expect-error -- CSS module without type declarations
+
 import "@blocknote/mantine/style.css";
 
 interface BlockNoteEditorProps {
