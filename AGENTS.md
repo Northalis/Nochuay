@@ -36,6 +36,8 @@ Nochuay web application is an application for taking notes, Work schedule, other
 - **State Management:** Zustand (for global sidebar state).
 - **Styling:** Tailwind CSS.
 - **Editor:** BlockNote
+- **UI Components:** `shadcn/ui` (Radix UI primitives). Do NOT build complex interactive components (modals, dropdowns) from scratch.
+- **Icons:** `lucide-react`. Use these exclusively to match the Notion aesthetic.
 
 ### Infrastructure
 
@@ -207,15 +209,15 @@ All responses must follow this wrapper format:
 
 ## **Endpoint:**
 
-| Method | Endpoint | Description | Request Body|Response Data |
-|------|--------------|---------------|---------------------|--------------------------|
-| POST | /auth/signup | Register user | "{email, password}" | "{token, user}" |
-| POST | /auth/login|Login user | "{email, password}" | "{token, user}" |
-| GET | /pages/sidebar | Critical: Returns nested tree | - | "[PageNode, PageNode...]" |
-| POST | /pages|Create new page | "{parentId, title}" | Page |
-| GET | /pages/:id|Get page details | - | Page |
-| PATCH | /pages/:id|Update properties | "{title, icon, content}" | Page |
-| DELETE | /pages/:id|Delete page & children | - | {success: true} |
+| Method | Endpoint       | Description                   | Request Body             | Response Data             |
+| ------ | -------------- | ----------------------------- | ------------------------ | ------------------------- |
+| POST   | /auth/signup   | Register user                 | "{email, password}"      | "{token, user}"           |
+| POST   | /auth/login    | Login user                    | "{email, password}"      | "{token, user}"           |
+| GET    | /pages/sidebar | Critical: Returns nested tree | -                        | "[PageNode, PageNode...]" |
+| POST   | /pages         | Create new page               | "{parentId, title}"      | Page                      |
+| GET    | /pages/:id     | Get page details              | -                        | Page                      |
+| PATCH  | /pages/:id     | Update properties             | "{title, icon, content}" | Page                      |
+| DELETE | /pages/:id     | Delete page & children        | -                        | {success: true}           |
 
 ---
 
@@ -223,7 +225,7 @@ All responses must follow this wrapper format:
 
 1.  **Components:** Functional components only.
 2.  **Props:** Define strict interfaces for all props. Avoid `any`.
-3.  **Fetching:** Use Server Components for initial data fetch where possible; use Client Components + SWR/TanStack Query for dynamic updates.
+3.  **Fetching:** Use Server Components for initial data fetch where possible. For dynamic client-side updates (like the recursive sidebar tree), strictly use **TanStack Query (v5)**. Do not use SWR or standard `useEffect` fetching.
 
 4.  Use the Development Server, not `npm run build`
 
@@ -248,6 +250,32 @@ If you add or update dependencies remember to:
    | `npm run lint` | Run ESLint checks |
    | `npm run test` | Execute the test suite (if present) |
    | `npm run build` | Production build - do not run during agent sessions
+
+8. **Editor State Guardrail:** BlockNote manages its own internal state. Use BlockNote's provided hooks. Do NOT attempt to sync editor keystrokes or raw block data into the global `Zustand` store. Only send the final JSON payload to the API on auto-save/debounce.
+
+#### Frontend Structure
+
+```text
+nochuay-front/
+├── app/
+│   ├── (auth)/                 # Route Group: Auth pages
+│   ├── (main)/                 # Route Group: Main app (Sidebar lives in layout.tsx here)
+│   │   ├── documents/          # Editor view routes
+│   │   └── page.tsx
+│   ├── globals.css
+│   └── layout.tsx
+├── components/
+│   ├── editor/                 # BlockNote wrappers
+│   ├── layout/                 # Sidebar and SidebarItem (Recursive)
+│   ├── modals/
+│   └── ui/                     # shadcn/ui generated components
+├── hooks/
+├── lib/
+│   ├── api.ts                  # Axios/Fetch calls matching the API Contract
+│   └── utils.ts
+├── store/                      # Zustand stores
+└── middleware.ts               # JWT route protection
+```
 
 ---
 
