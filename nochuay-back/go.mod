@@ -1,4 +1,4 @@
-module nochuay.app/api
+module github.com/Northalis/Nochuay/nochuay-back
 
 go 1.25.6
 

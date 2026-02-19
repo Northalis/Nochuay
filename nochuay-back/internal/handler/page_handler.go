@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"nochuay.app/api/internal/handler/response"
-	"nochuay.app/api/internal/middleware"
-	"nochuay.app/api/internal/service"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/handler/response"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/middleware"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/service"
 )
 
 // PageHandler handles page-related HTTP requests.

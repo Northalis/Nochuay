@@ -4,13 +4,13 @@ import (
 	"log"
 	"net/http"
 
-	"nochuay.app/api/internal/config"
-	"nochuay.app/api/internal/db"
-	"nochuay.app/api/internal/handler"
-	"nochuay.app/api/internal/handler/response"
-	"nochuay.app/api/internal/middleware"
-	"nochuay.app/api/internal/repository"
-	"nochuay.app/api/internal/service"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/config"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/db"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/handler"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/handler/response"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/middleware"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/repository"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/service"
 )
 
 func main() {

@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"nochuay.app/api/internal/model"
-	"nochuay.app/api/internal/repository"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/model"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/repository"
 )
 
 // PageService defines the interface for page business logic.
