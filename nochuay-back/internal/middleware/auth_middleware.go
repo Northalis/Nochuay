@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"nochuay.app/api/internal/handler/response"
-	"nochuay.app/api/internal/service"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/handler/response"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/service"
 )
 
 // contextKey is a custom type for context keys to avoid collisions.

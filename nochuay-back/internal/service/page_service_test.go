@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"nochuay.app/api/internal/model"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/model"
 )
 
 func TestBuildTree_EmptyList(t *testing.T) {

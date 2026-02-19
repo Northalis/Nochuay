@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"nochuay.app/api/internal/handler/response"
-	"nochuay.app/api/internal/service"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/handler/response"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/service"
 )
 
 // AuthHandler handles authentication HTTP requests.

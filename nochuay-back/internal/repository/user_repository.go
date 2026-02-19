@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"nochuay.app/api/internal/model"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/model"
 )
 
 // UserRepository defines the interface for user data access.

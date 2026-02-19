@@ -10,8 +10,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/argon2"
-	"nochuay.app/api/internal/model"
-	"nochuay.app/api/internal/repository"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/model"
+	"github.com/Northalis/Nochuay/nochuay-back/internal/repository"
 )
 
 // AuthService defines the interface for authentication business logic.
