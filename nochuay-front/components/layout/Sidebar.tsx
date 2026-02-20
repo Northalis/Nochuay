@@ -1,112 +1,92 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   PlusCircle,
   Search,
   Settings,
   FileText,
+  LogOut,
+  User,
+  Loader2,
 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import SidebarItem from "./SidebarItem";
-import { PageNode } from "@/lib/types";
-
-// ── Mock data for visual testing ──────────────────────────────
-// Remove this once connected to the real API via TanStack Query
-const MOCK_PAGES: PageNode[] = [
-  {
-    id: "1",
-    userId: "u1",
-    parentId: null,
-    title: "Getting Started",
-    icon: "📖",
-    content: "[]",
-    createdAt: "",
-    depth: 0,
-    children: [
-      {
-        id: "1-1",
-        userId: "u1",
-        parentId: "1",
-        title: "Installation Guide",
-        icon: "🔧",
-        content: "[]",
-        createdAt: "",
-        depth: 1,
-        children: [
-          {
-            id: "1-1-1",
-            userId: "u1",
-            parentId: "1-1",
-            title: "Prerequisites",
-            content: "[]",
-            createdAt: "",
-            depth: 2,
-            children: [],
-          },
-        ],
-      },
-      {
-        id: "1-2",
-        userId: "u1",
-        parentId: "1",
-        title: "Quick Start",
-        icon: "🚀",
-        content: "[]",
-        createdAt: "",
-        depth: 1,
-        children: [],
-      },
-    ],
-  },
-  {
-    id: "2",
-    userId: "u1",
-    parentId: null,
-    title: "Project Notes",
-    icon: "📝",
-    content: "[]",
-    createdAt: "",
-    depth: 0,
-    children: [
-      {
-        id: "2-1",
-        userId: "u1",
-        parentId: "2",
-        title: "Meeting Minutes",
-        icon: "📋",
-        content: "[]",
-        createdAt: "",
-        depth: 1,
-        children: [],
-      },
-    ],
-  },
-  {
-    id: "3",
-    userId: "u1",
-    parentId: null,
-    title: "Personal Diary",
-    icon: "📔",
-    content: "[]",
-    createdAt: "",
-    depth: 0,
-    children: [],
-  },
-];
-// ──────────────────────────────────────────────────────────────
+import { useSidebarTree, useCreatePage } from "@/hooks/use-pages";
+import { useUserStore } from "@/store/use-user-store";
 
 interface SidebarProps {
   onClose: () => void;
 }
 
 export default function Sidebar({ onClose }: SidebarProps) {
+  const router = useRouter();
+  const { data: pages, isLoading, isError } = useSidebarTree();
+  const createPage = useCreatePage();
+  const { user, logout } = useUserStore();
+
+  // ── Profile dropdown ──────────────────────────────────────
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!profileOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [profileOpen]);
+
+  function handleLogout() {
+    setProfileOpen(false);
+    logout();
+    router.push("/login");
+  }
+
+  function handleNewPage() {
+    createPage.mutate({ title: "Untitled" });
+  }
+
   return (
     <div className="flex flex-col h-full w-60">
-      {/* Header */}
+      {/* Header / Profile */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-neutral-200 dark:border-neutral-800">
-        <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-200 truncate">
-          Nochuay Workspace
-        </span>
+        <div className="relative" ref={profileRef}>
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-200 truncate hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded px-1 py-0.5"
+          >
+            <User size={16} className="shrink-0 text-neutral-500" />
+            <span className="truncate">
+              {user?.email ?? "Nochuay Workspace"}
+            </span>
+          </button>
+
+          {profileOpen && (
+            <div className="absolute left-0 top-8 z-50 w-52 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg py-1">
+              {user && (
+                <div className="px-3 py-2 text-xs text-neutral-500 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700 truncate">
+                  {user.email}
+                </div>
+              )}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                <LogOut size={14} />
+                Log out
+              </button>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={onClose}
           className="p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-500"
@@ -126,7 +106,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <Settings size={16} />
           <span>Settings</span>
         </button>
-        <button className="flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 w-full text-left">
+        <button
+          onClick={handleNewPage}
+          disabled={createPage.isPending}
+          className="flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 w-full text-left disabled:opacity-50"
+        >
           <PlusCircle size={16} />
           <span>New Page</span>
         </button>
@@ -137,14 +121,28 @@ export default function Sidebar({ onClose }: SidebarProps) {
         <p className="px-2 text-xs font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">
           Pages
         </p>
-        {MOCK_PAGES.length === 0 ? (
+
+        {isLoading && (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 size={20} className="animate-spin text-neutral-400" />
+          </div>
+        )}
+
+        {isError && (
+          <p className="px-2 text-sm text-red-500">Failed to load pages.</p>
+        )}
+
+        {!isLoading && !isError && pages && pages.length === 0 && (
           <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-500 dark:text-neutral-400 rounded">
             <FileText size={16} />
             <span className="italic">No pages yet</span>
           </div>
-        ) : (
-          MOCK_PAGES.map((node) => <SidebarItem key={node.id} node={node} />)
         )}
+
+        {!isLoading &&
+          !isError &&
+          pages &&
+          pages.map((node) => <SidebarItem key={node.id} node={node} />)}
       </div>
 
       {/* Footer */}

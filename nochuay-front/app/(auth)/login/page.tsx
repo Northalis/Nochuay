@@ -46,7 +46,7 @@ export default function LoginPage() {
       });
 
       setAuth(data.token, data.user);
-      router.push("/");
+      router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
