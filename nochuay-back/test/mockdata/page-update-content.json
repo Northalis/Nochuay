@@ -1,0 +1,39 @@
+{
+  "content": [
+    {
+      "id": "block-001",
+      "type": "paragraph",
+      "props": {
+        "textColor": "default",
+        "backgroundColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "This is a paragraph block with updated content.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "block-002",
+      "type": "heading",
+      "props": {
+        "textColor": "default",
+        "backgroundColor": "default",
+        "textAlignment": "left",
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Section Heading",
+          "styles": { "bold": true }
+        }
+      ],
+      "children": []
+    }
+  ]
+}

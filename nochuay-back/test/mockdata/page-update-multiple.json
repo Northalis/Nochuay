@@ -1,0 +1,58 @@
+{
+  "title": "Meeting Notes - Sprint 12",
+  "icon": "📋",
+  "content": [
+    {
+      "id": "block-001",
+      "type": "heading",
+      "props": {
+        "textColor": "default",
+        "backgroundColor": "default",
+        "textAlignment": "left",
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Sprint 12 Meeting Notes",
+          "styles": { "bold": true }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "block-002",
+      "type": "bulletListItem",
+      "props": {
+        "textColor": "default",
+        "backgroundColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Review backlog items",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "block-003",
+      "type": "bulletListItem",
+      "props": {
+        "textColor": "default",
+        "backgroundColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Assign tasks for next sprint",
+          "styles": {}
+        }
+      ],
+      "children": []
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+[
+  {
+    "id": "block-001",
+    "type": "paragraph",
+    "props": {
+      "textColor": "default",
+      "backgroundColor": "default",
+      "textAlignment": "left"
+    },
+    "content": [
+      {
+        "type": "text",
+        "text": "Hello, this is the first paragraph.",
+        "styles": {}
+      }
+    ],
+    "children": []
+  },
+  {
+    "id": "block-002",
+    "type": "heading",
+    "props": {
+      "textColor": "default",
+      "backgroundColor": "default",
+      "textAlignment": "left",
+      "level": 2
+    },
+    "content": [
+      {
+        "type": "text",
+        "text": "Important Section",
+        "styles": { "bold": true }
+      }
+    ],
+    "children": []
+  },
+  {
+    "id": "block-003",
+    "type": "paragraph",
+    "props": {
+      "textColor": "default",
+      "backgroundColor": "default",
+      "textAlignment": "left"
+    },
+    "content": [
+      {
+        "type": "text",
+        "text": "Some detailed notes go here with ",
+        "styles": {}
+      },
+      {
+        "type": "text",
+        "text": "bold text",
+        "styles": { "bold": true }
+      },
+      {
+        "type": "text",
+        "text": " and ",
+        "styles": {}
+      },
+      {
+        "type": "text",
+        "text": "italic text",
+        "styles": { "italic": true }
+      },
+      {
+        "type": "text",
+        "text": ".",
+        "styles": {}
+      }
+    ],
+    "children": []
+  },
+  {
+    "id": "block-004",
+    "type": "numberedListItem",
+    "props": {
+      "textColor": "default",
+      "backgroundColor": "default",
+      "textAlignment": "left"
+    },
+    "content": [
+      {
+        "type": "text",
+        "text": "First item",
+        "styles": {}
+      }
+    ],
+    "children": []
+  },
+  {
+    "id": "block-005",
+    "type": "numberedListItem",
+    "props": {
+      "textColor": "default",
+      "backgroundColor": "default",
+      "textAlignment": "left"
+    },
+    "content": [
+      {
+        "type": "text",
+        "text": "Second item",
+        "styles": {}
+      }
+    ],
+    "children": []
+  }
+]
