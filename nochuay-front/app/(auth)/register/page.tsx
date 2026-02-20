@@ -53,7 +53,7 @@ export default function RegisterPage() {
       });
 
       setAuth(data.token, data.user);
-      router.push("/documents");
+      router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

@@ -10,19 +10,37 @@ interface UserState {
   user: User | null;
   setAuth: (token: string, user: User) => void;
   logout: () => void;
+  /** Restore token + user from localStorage into Zustand state */
+  hydrate: () => void;
 }
 
 export const useUserStore = create<UserState>((set) => ({
-  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
+  // Start as null — hydrate() will populate from localStorage
+  token: null,
   user: null,
 
   setAuth: (token, user) => {
     localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
     set({ token, user });
   },
 
   logout: () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     set({ token: null, user: null });
+  },
+
+  hydrate: () => {
+    if (typeof window === "undefined") return;
+    const token = localStorage.getItem("token");
+    let user: User | null = null;
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) user = JSON.parse(raw);
+    } catch {
+      // corrupted data — ignore
+    }
+    set({ token, user });
   },
 }));
