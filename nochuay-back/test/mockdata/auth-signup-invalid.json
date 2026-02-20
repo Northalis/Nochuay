@@ -1,0 +1,32 @@
+[
+  {
+    "description": "Missing password",
+    "body": {
+      "email": "testuser@example.com"
+    }
+  },
+  {
+    "description": "Missing email",
+    "body": {
+      "password": "securePass123"
+    }
+  },
+  {
+    "description": "Password too short (less than 6 characters)",
+    "body": {
+      "email": "testuser@example.com",
+      "password": "abc"
+    }
+  },
+  {
+    "description": "Invalid email format (no @ symbol)",
+    "body": {
+      "email": "invalid-email",
+      "password": "securePass123"
+    }
+  },
+  {
+    "description": "Empty body",
+    "body": {}
+  }
+]
