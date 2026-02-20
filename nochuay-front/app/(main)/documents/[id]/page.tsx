@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { Page } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Dynamically import the editor to avoid SSR issues with BlockNote
@@ -47,14 +47,25 @@ export default function DocumentPage({ params }: DocumentPageProps) {
   }
 
   if (error || !page) {
+    const isNotFound = error?.includes("404") || error?.includes("not found");
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3">
-        <p className="text-neutral-500">{error ?? "Page not found"}</p>
+        <FileText size={40} className="text-neutral-300" />
+        <p className="text-neutral-500 text-lg font-medium">
+          {isNotFound
+            ? "This page has been deleted"
+            : (error ?? "Page not found")}
+        </p>
+        <p className="text-neutral-400 text-sm">
+          {isNotFound
+            ? "The page you're looking for no longer exists."
+            : "Something went wrong while loading this page."}
+        </p>
         <button
           onClick={() => router.push("/")}
-          className="text-sm text-blue-500 hover:underline"
+          className="mt-2 text-sm text-blue-500 hover:underline"
         >
-          Go back home
+          ← Back to home
         </button>
       </div>
     );
