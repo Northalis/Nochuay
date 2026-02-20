@@ -20,10 +20,10 @@ Nochuay web application is an application for taking notes, Work schedule, other
 ### Backend (Golang)
 
 - **Version:** Latest Stable
-- **Framework:** Standard Library + `Echo` (or lightweight router).
+- **Framework:** Standard Library + `Echo`
 - **Database:** PostgreSQL 17+.
 - **ORM/Data Access:** Raw SQL or `sqlc` preferred over heavy ORMs.
-- **Auth:** JWT (Stateless) + Argon2 for password hashing.
+- **Auth:** JWT (Stateless) + bcrypt for password hashing.
 - **Key Architectural Pattern:**
   - **Layered:** `Handler` -> `Service` -> `Repository`.
   - **Tree Construction:** The "Sidebar" tree is constructed in the **Service Layer** after fetching a flat list from the Repo.
@@ -62,7 +62,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 
 ### Frontend (.env.local)
 
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
+NEXT_PUBLIC_API_URL=http://localhost:8080/
 
 ---
 
