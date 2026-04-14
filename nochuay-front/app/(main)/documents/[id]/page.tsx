@@ -1,11 +1,13 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
-import { Page } from "@/lib/types";
 import { Loader2, FileText } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useQuery } from "@tanstack/react-query";
+import { getPage } from "@/lib/page-api";
+import { pageKeys } from "@/hooks/use-pages";
+import { useUserStore } from "@/store/use-user-store";
 
 // Dynamically import the editor to avoid SSR issues with BlockNote
 const BlockNoteEditor = dynamic(
@@ -20,25 +22,22 @@ interface DocumentPageProps {
 export default function DocumentPage({ params }: DocumentPageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const [page, setPage] = useState<Page | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const userID = useUserStore((state) => state.user?.id ?? null);
 
-  useEffect(() => {
-    async function loadPage() {
-      try {
-        const data = await apiFetch<Page>(`/pages/${id}`);
-        setPage(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load page");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadPage();
-  }, [id]);
+  const {
+    data: page,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: pageKeys.detail(userID, id),
+    queryFn: () => getPage(id),
+    enabled: !!id,
+  });
 
-  if (loading) {
+  const errorMessage =
+    error instanceof Error ? error.message : "Failed to load page";
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 size={24} className="animate-spin text-neutral-400" />
@@ -47,14 +46,13 @@ export default function DocumentPage({ params }: DocumentPageProps) {
   }
 
   if (error || !page) {
-    const isNotFound = error?.includes("404") || error?.includes("not found");
+    const isNotFound =
+      errorMessage.includes("404") || errorMessage.includes("not found");
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3">
         <FileText size={40} className="text-neutral-300" />
         <p className="text-neutral-500 text-lg font-medium">
-          {isNotFound
-            ? "This page has been deleted"
-            : (error ?? "Page not found")}
+          {isNotFound ? "This page has been deleted" : errorMessage}
         </p>
         <p className="text-neutral-400 text-sm">
           {isNotFound
