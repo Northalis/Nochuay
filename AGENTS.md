@@ -6,7 +6,7 @@
 
 **Name:** Nochuay (Notion Clone)
 **Type:** Hierarchical Note-Taking Application
-**Goal:** MVP (v1.0.0) by Feb 19, 2026.
+**Goal:** MVP v1.0.1 stabilization (post-v1.0.0 bug-fix iteration)
 **Core Complexity:**
 
 1.  **Recursive Data Structures:** Pages can be infinitely nested inside other pages.
@@ -130,13 +130,15 @@ interface PageNode extends Page {
 
 - **Start All Services:** `docker-compose up --build`
 - **Backend Only (Hot Reload):** Uses `air`. Run inside container.
-- **Frontend Only:** `cd frontend && npm run dev`
+- **Frontend Only:** `cd nochuay-front && npm run dev`
 
 ### Verification
 
 - **Run Unit Tests (Go):** `go test -v ./...`
 - **Run Linting (Go):** `go vet ./...`
 - **Build Production Binary:** `go build -o bin/api ./cmd/api`
+- **Run Frontend Tests (Jest):** `cd nochuay-front && npx jest --roots ./test/frontend --verbose`
+- **Run Frontend Lint (targeted paths):** `cd nochuay-front && npx eslint <paths>`
 
 ### Database Migrations
 
@@ -248,10 +250,16 @@ If you add or update dependencies remember to:
    |-----------------|------------------------------------------------------|
    | `npm run dev` | Start the Next.js dev server with HMR |
    | `npm run lint` | Run ESLint checks |
-   | `npm run test` | Execute the test suite (if present) |
+   | `npx jest --roots ./test/frontend --verbose` | Execute frontend test suite |
    | `npm run build` | Production build - do not run during agent sessions
 
 8. **Editor State Guardrail:** BlockNote manages its own internal state. Use BlockNote's provided hooks. Do NOT attempt to sync editor keystrokes or raw block data into the global `Zustand` store. Only send the final JSON payload to the API on auto-save/debounce.
+
+9. **v1.0.1 Data Consistency Guardrails:**
+   - Sidebar and page detail query keys must be user-scoped in TanStack Query to prevent cross-user cache leakage.
+   - Document page data should be loaded via TanStack Query detail key, not ad-hoc `useEffect` fetch state.
+   - Logout flow must clear React Query cache and reset sidebar UI store before redirecting.
+   - If workspace lint output is noisy due generated `.next` files, validate changed files with targeted ESLint path runs.
 
 #### Frontend Structure
 
@@ -305,3 +313,14 @@ When generating tests, follow this priority:
     - _Scenario:_ Given a flat list of pages [A (root), B (child of A), C (child of B)], verify the JSON output is nested correctly A -> B -> C.
 2.  **Integration Tests (Repository Layer):**
     - _Scenario:_ Insert a page, insert a child, delete the parent. Verify the child is also deleted (Cascade).
+
+---
+
+## Documentation Index (Link, Don't Duplicate)
+
+- Architecture deep-dive: `doc/02-architecture-overview.md`
+- API contract details: `doc/03-api-reference.md`
+- Database and migrations: `doc/04-database-guide.md`
+- Frontend conventions: `doc/05-frontend-guide.md`
+- Day-to-day workflow: `doc/06-development-workflow.md`
+- Testing guide: `doc/07-testing-guide.md`
