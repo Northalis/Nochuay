@@ -6,6 +6,7 @@ interface SidebarState {
   toggle: (id: string) => void;
   expand: (id: string) => void;
   collapse: (id: string) => void;
+  reset: () => void;
 
   /** Page currently being renamed inline (null = none) */
   renamingId: string | null;
@@ -38,6 +39,12 @@ export const useSidebarStore = create<SidebarState>((set) => ({
       const next = new Set(state.expandedIds);
       next.delete(id);
       return { expandedIds: next };
+    }),
+
+  reset: () =>
+    set({
+      expandedIds: new Set<string>(),
+      renamingId: null,
     }),
 
   renamingId: null,

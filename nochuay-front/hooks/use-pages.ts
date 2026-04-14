@@ -5,18 +5,29 @@ import {
   updatePage,
   deletePage,
 } from "@/lib/page-api";
+import { useUserStore } from "@/store/use-user-store";
 
 /* ── Query keys ──────────────────────────────────────────────── */
 export const pageKeys = {
-  sidebar: ["pages", "sidebar"] as const,
-  detail: (id: string) => ["pages", id] as const,
+  all: ["pages"] as const,
+  sidebar: {
+    all: ["pages", "sidebar"] as const,
+    byUser: (userID: string | null) =>
+      ["pages", "sidebar", userID ?? "anonymous"] as const,
+  },
+  detailPrefix: ["pages", "detail"] as const,
+  detail: (userID: string | null, id: string) =>
+    ["pages", "detail", userID ?? "anonymous", id] as const,
 };
 
 /* ── Sidebar tree query ──────────────────────────────────────── */
 export function useSidebarTree() {
+  const userID = useUserStore((state) => state.user?.id ?? null);
+
   return useQuery({
-    queryKey: pageKeys.sidebar,
+    queryKey: pageKeys.sidebar.byUser(userID),
     queryFn: fetchSidebarTree,
+    enabled: !!userID,
   });
 }
 
@@ -27,7 +38,7 @@ export function useCreatePage() {
     mutationFn: (body: { parentId?: string | null; title?: string }) =>
       createPage(body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pageKeys.sidebar });
+      qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
     },
   });
 }
@@ -35,6 +46,8 @@ export function useCreatePage() {
 /* ── Update page mutation ────────────────────────────────────── */
 export function useUpdatePage() {
   const qc = useQueryClient();
+  const userID = useUserStore((state) => state.user?.id ?? null);
+
   return useMutation({
     mutationFn: ({
       id,
@@ -45,8 +58,12 @@ export function useUpdatePage() {
       icon?: string;
       content?: unknown;
     }) => updatePage(id, body),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pageKeys.sidebar });
+    onSuccess: (updatedPage, variables) => {
+      const pageID = updatedPage.id || variables.id;
+
+      qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+      qc.setQueryData(pageKeys.detail(userID, pageID), updatedPage);
+      qc.invalidateQueries({ queryKey: pageKeys.detailPrefix });
     },
   });
 }
@@ -57,7 +74,8 @@ export function useDeletePage() {
   return useMutation({
     mutationFn: (id: string) => deletePage(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pageKeys.sidebar });
+      qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+      qc.invalidateQueries({ queryKey: pageKeys.detailPrefix });
     },
   });
 }

@@ -97,4 +97,17 @@ describe("useSidebarStore", () => {
     const state = useSidebarStore.getState();
     expect(state.renamingId).toBeNull();
   });
+
+  test("reset clears expanded ids and renaming state", () => {
+    const { expand, setRenamingId, reset } = useSidebarStore.getState();
+    expand("page-1");
+    expand("page-2");
+    setRenamingId("page-2");
+
+    reset();
+
+    const state = useSidebarStore.getState();
+    expect(state.expandedIds.size).toBe(0);
+    expect(state.renamingId).toBeNull();
+  });
 });

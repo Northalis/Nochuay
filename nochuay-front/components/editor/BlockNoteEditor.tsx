@@ -156,7 +156,7 @@ export default function BlockNoteEditor({
           knownPageBlockIds.current.add(newPage.id);
 
           // Refresh the sidebar to show the new child page
-          queryClient.invalidateQueries({ queryKey: pageKeys.sidebar });
+          queryClient.invalidateQueries({ queryKey: pageKeys.sidebar.all });
         } catch (err) {
           console.error("Failed to create nested page:", err);
         }
@@ -191,7 +191,7 @@ export default function BlockNoteEditor({
       for (const removedPageId of removedIds) {
         apiFetch(`/pages/${removedPageId}`, { method: "DELETE" })
           .then(() => {
-            queryClient.invalidateQueries({ queryKey: pageKeys.sidebar });
+            queryClient.invalidateQueries({ queryKey: pageKeys.sidebar.all });
           })
           .catch((err) => {
             console.error("Failed to delete nested page:", err);

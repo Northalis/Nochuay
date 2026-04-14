@@ -12,9 +12,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import SidebarItem from "./SidebarItem";
 import { useSidebarTree, useCreatePage } from "@/hooks/use-pages";
 import { useUserStore } from "@/store/use-user-store";
+import { useSidebarStore } from "@/store/use-sidebar-store";
 
 interface SidebarProps {
   onClose: () => void;
@@ -22,9 +24,11 @@ interface SidebarProps {
 
 export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: pages, isLoading, isError } = useSidebarTree();
   const createPage = useCreatePage();
   const { user, logout } = useUserStore();
+  const resetSidebar = useSidebarStore((state) => state.reset);
 
   // ── Profile dropdown ──────────────────────────────────────
   const [profileOpen, setProfileOpen] = useState(false);
@@ -46,6 +50,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   function handleLogout() {
     setProfileOpen(false);
+    resetSidebar();
+    queryClient.clear();
     logout();
     router.push("/login");
   }
