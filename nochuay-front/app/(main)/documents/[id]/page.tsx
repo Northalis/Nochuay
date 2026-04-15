@@ -1,13 +1,16 @@
 "use client";
 
 import { use } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, FileText } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { getPage } from "@/lib/page-api";
-import { pageKeys } from "@/hooks/use-pages";
+import { pageKeys, useSidebarTree } from "@/hooks/use-pages";
 import { useUserStore } from "@/store/use-user-store";
+import BreadcrumbNavigator from "@/components/layout/BreadcrumbNavigator";
+import { buildBreadcrumbSegments } from "@/lib/breadcrumb";
 
 // Dynamically import the editor to avoid SSR issues with BlockNote
 const BlockNoteEditor = dynamic(
@@ -23,6 +26,7 @@ export default function DocumentPage({ params }: DocumentPageProps) {
   const { id } = use(params);
   const router = useRouter();
   const userID = useUserStore((state) => state.user?.id ?? null);
+  const { data: sidebarTree } = useSidebarTree();
 
   const {
     data: page,
@@ -36,6 +40,11 @@ export default function DocumentPage({ params }: DocumentPageProps) {
 
   const errorMessage =
     error instanceof Error ? error.message : "Failed to load page";
+
+  const breadcrumbSegments = useMemo(
+    () => buildBreadcrumbSegments(sidebarTree, id, page?.title),
+    [sidebarTree, id, page?.title],
+  );
 
   if (isLoading) {
     return (
@@ -71,9 +80,20 @@ export default function DocumentPage({ params }: DocumentPageProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Page title header */}
-      <div className="px-12 pt-10 pb-4">
-        {page.icon && <span className="text-5xl block mb-3">{page.icon}</span>}
+      {/* Breadcrumb */}
+      <div className="px-6 pt-5 pb-2 border-b border-neutral-200 dark:border-neutral-800">
+        <BreadcrumbNavigator
+          segments={breadcrumbSegments}
+          currentPageID={id}
+          onNavigate={(pageID) =>
+            router.push(pageID ? `/documents/${pageID}` : "/")
+          }
+        />
+      </div>
+
+      {/* Centered page title */}
+      <div className="w-full max-w-4xl mx-auto px-6 pt-6 pb-3 text-left">
+        {page.icon && <span className="text-5xl block mb-2">{page.icon}</span>}
         <h1 className="text-3xl font-bold text-neutral-800 dark:text-neutral-100">
           {page.title}
         </h1>

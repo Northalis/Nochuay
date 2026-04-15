@@ -2,6 +2,25 @@
 
 ## 2026-04-15
 
+### v1.2.0 Feature Implementation
+
+- Added frontend breadcrumb navigation for recursive documents:
+  - New breadcrumb segment builder utility for deriving path from sidebar tree data
+  - New breadcrumb UI component at the top of document pages
+  - Clickable breadcrumb segments for fast ancestor navigation (`main` routes to `/`)
+  - Breadcrumb path auto-collapses based on current route depth (example: from `main>page1>page2>page3` to `main>page1`)
+- Updated document page layout:
+  - Breadcrumb displayed on top with muted neutral colors for light/dark modes
+  - Page icon/title moved into a centered section positioned closer to the editor
+  - Long breadcrumb paths wrap across lines
+- Updated app version label in sidebar footer to `Nochuay v1.2.0`
+- Added frontend tests:
+  - New unit tests for breadcrumb path builder covering root path, deep path, fallback behavior, and collapse behavior
+
+### Purpose
+
+- Deliver v1.2.0 UX enhancement for recursive navigation clarity and faster jumping across nested pages.
+
 ### v1.1.0 Feature Implementation
 
 - Added backend page asset upload endpoint:
