@@ -5,8 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -565,5 +569,163 @@ func TestGetContent_NotFound(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("expected status 404, got %d", w.Code)
+	}
+}
+
+// ── POST /pages/{id}/assets (UploadAsset) ──────────────────
+
+func TestUploadAsset_SuccessImage(t *testing.T) {
+	userID := uuid.New()
+	pageID := uuid.New()
+	uploadDir := t.TempDir()
+
+	mock := &MockPageService{
+		GetPageFn: func(_ context.Context, uid, pid uuid.UUID) (*model.Page, error) {
+			return &model.Page{ID: pid, UserID: uid, Title: "Page", Content: json.RawMessage(`[]`)}, nil
+		},
+	}
+
+	h := handler.NewPageHandler(
+		mock,
+		handler.WithUploadDir(uploadDir),
+		handler.WithMaxUploadSizeBytes(1024*1024),
+	)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("kind", "image")
+	part, err := writer.CreateFormFile("file", "sample.png")
+	if err != nil {
+		t.Fatalf("failed to create form file: %v", err)
+	}
+	_, _ = part.Write([]byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0x00, 0x00, 0x00, 0x0D})
+	_ = writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/pages/"+pageID.String()+"/assets", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.SetPathValue("id", pageID.String())
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.UploadAsset(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected status 201, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	var envelope struct {
+		Data struct {
+			URL string `json:"url"`
+		} `json:"data"`
+		Error *string `json:"error"`
+	}
+	if err := json.NewDecoder(w.Body).Decode(&envelope); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if envelope.Error != nil {
+		t.Fatalf("expected nil error, got %s", *envelope.Error)
+	}
+	if !strings.HasPrefix(envelope.Data.URL, "/assets/") {
+		t.Fatalf("expected public asset URL, got %s", envelope.Data.URL)
+	}
+
+	assetRelativePath := strings.TrimPrefix(envelope.Data.URL, "/assets/")
+	assetFullPath := filepath.Join(uploadDir, filepath.FromSlash(assetRelativePath))
+	if _, err := os.Stat(assetFullPath); err != nil {
+		t.Fatalf("expected uploaded file to exist at %s: %v", assetFullPath, err)
+	}
+}
+
+func TestUploadAsset_InvalidKind(t *testing.T) {
+	mock := &MockPageService{
+		GetPageFn: func(_ context.Context, uid, pid uuid.UUID) (*model.Page, error) {
+			return &model.Page{ID: pid, UserID: uid, Title: "Page", Content: json.RawMessage(`[]`)}, nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("kind", "video")
+	part, _ := writer.CreateFormFile("file", "sample.txt")
+	_, _ = part.Write([]byte("hello"))
+	_ = writer.Close()
+
+	pageID := uuid.New()
+	req := httptest.NewRequest(http.MethodPost, "/pages/"+pageID.String()+"/assets", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.SetPathValue("id", pageID.String())
+	req = injectUserID(req, uuid.New())
+
+	w := httptest.NewRecorder()
+	h.UploadAsset(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestUploadAsset_UnsupportedFileType(t *testing.T) {
+	userID := uuid.New()
+	pageID := uuid.New()
+
+	mock := &MockPageService{
+		GetPageFn: func(_ context.Context, uid, pid uuid.UUID) (*model.Page, error) {
+			return &model.Page{ID: pid, UserID: uid, Title: "Page", Content: json.RawMessage(`[]`)}, nil
+		},
+	}
+
+	h := handler.NewPageHandler(mock)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("kind", "image")
+	part, _ := writer.CreateFormFile("file", "bad.exe")
+	_, _ = part.Write([]byte("MZ fake executable"))
+	_ = writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/pages/"+pageID.String()+"/assets", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.SetPathValue("id", pageID.String())
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.UploadAsset(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestUploadAsset_TooLarge(t *testing.T) {
+	userID := uuid.New()
+	pageID := uuid.New()
+
+	mock := &MockPageService{
+		GetPageFn: func(_ context.Context, uid, pid uuid.UUID) (*model.Page, error) {
+			return &model.Page{ID: pid, UserID: uid, Title: "Page", Content: json.RawMessage(`[]`)}, nil
+		},
+	}
+
+	h := handler.NewPageHandler(mock, handler.WithMaxUploadSizeBytes(10))
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("kind", "file")
+	part, _ := writer.CreateFormFile("file", "large.txt")
+	_, _ = part.Write([]byte("this-is-over-10-bytes"))
+	_ = writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/pages/"+pageID.String()+"/assets", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.SetPathValue("id", pageID.String())
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.UploadAsset(w, req)
+
+	if w.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("expected status 413, got %d; body: %s", w.Code, w.Body.String())
 	}
 }
