@@ -281,6 +281,77 @@ curl -X POST http://localhost:8080/pages \
 
 ---
 
+#### `POST /pages/{id}/assets`
+
+Upload an image or file for a page using multipart form data. This is used by the editor slash menu for direct local uploads.
+
+**Request:**
+
+- Content-Type: `multipart/form-data`
+- Auth required: `Authorization: Bearer <TOKEN>`
+
+**Form Fields:**
+
+| Field  | Type   | Required | Description           |
+| ------ | ------ | -------- | --------------------- |
+| `kind` | string | Yes      | `image` or `file`     |
+| `file` | file   | Yes      | Uploaded file payload |
+
+**Allowed MIME / extension policy:**
+
+- `kind=image`: png, jpg/jpeg, webp, gif, svg
+- `kind=file`: pdf, txt, doc, docx
+- Default max size: `10MB` (configurable via `MAX_UPLOAD_SIZE_BYTES`)
+
+```bash
+curl -X POST http://localhost:8080/pages/page-uuid/assets \
+  -H "Authorization: Bearer <TOKEN>" \
+  -F "kind=image" \
+  -F "file=@./example.png"
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "data": {
+    "url": "/assets/user-uuid/page-uuid/1713209600000_xxxxxxxx.png",
+    "contentType": "image/png",
+    "size": 18342,
+    "name": "example.png"
+  },
+  "error": null
+}
+```
+
+**Error Responses:**
+
+| Status | Error Message                              | Cause                                   |
+| ------ | ------------------------------------------ | --------------------------------------- |
+| 400    | `invalid page id format`                   | Invalid UUID                            |
+| 400    | `kind must be either 'image' or 'file'`    | Invalid upload kind                     |
+| 400    | `file is required`                         | Missing `file` field                    |
+| 400    | `unsupported file type for requested kind` | MIME/extension validation failed        |
+| 401    | `unauthorized`                             | Missing or invalid token                |
+| 404    | `page not found`                           | Page doesn't exist or not owned by user |
+| 413    | `upload exceeds max size`                  | File larger than configured limit       |
+
+---
+
+#### `GET /assets/{userID}/{pageID}/{filename}`
+
+Retrieve previously uploaded assets. Returned URLs are intentionally opaque and can be embedded directly in editor blocks.
+
+**Request:**
+
+```bash
+curl http://localhost:8080/assets/user-uuid/page-uuid/1713209600000_xxxxxxxx.png
+```
+
+**Response (200 OK):** Raw file bytes with content type inferred by file server.
+
+---
+
 #### `GET /pages/{id}`
 
 Retrieve a single page with all its properties including content.
@@ -490,6 +561,7 @@ curl http://localhost:8080/pages/page-uuid/content \
 | 401         | Unauthorized          | Missing/invalid/expired JWT token               |
 | 404         | Not Found             | Resource doesn't exist or not owned by user     |
 | 409         | Conflict              | Duplicate email on signup                       |
+| 413         | Payload Too Large     | Upload request exceeds configured max size      |
 | 500         | Internal Server Error | Unexpected server-side failure                  |
 
 ---

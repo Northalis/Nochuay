@@ -38,7 +38,8 @@ describe("apiFetch", () => {
   test("makes GET request and returns data from response wrapper", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ data: { id: "123", title: "Test" }, error: null }),
+      json: () =>
+        Promise.resolve({ data: { id: "123", title: "Test" }, error: null }),
     });
 
     const result = await apiFetch<{ id: string; title: string }>("/pages/123");
@@ -49,6 +50,24 @@ describe("apiFetch", () => {
     const [url, options] = mockFetch.mock.calls[0];
     expect(url).toContain("/pages/123");
     expect(options.headers["Content-Type"]).toBe("application/json");
+  });
+
+  test("does not force JSON content-type for FormData bodies", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { ok: true }, error: null }),
+    });
+
+    const formData = new FormData();
+    formData.append("kind", "image");
+
+    await apiFetch("/pages/page-1/assets", {
+      method: "POST",
+      body: formData,
+    });
+
+    const [, options] = mockFetch.mock.calls[0];
+    expect(options.headers["Content-Type"]).toBeUndefined();
   });
 
   test("attaches Authorization header when token exists in localStorage", async () => {
@@ -86,7 +105,10 @@ describe("apiFetch", () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () =>
-        Promise.resolve({ data: { token: "abc", user: { id: "1" } }, error: null }),
+        Promise.resolve({
+          data: { token: "abc", user: { id: "1" } },
+          error: null,
+        }),
     });
 
     const result = await apiFetch("/auth/login", {
@@ -103,7 +125,8 @@ describe("apiFetch", () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 401,
-      json: () => Promise.resolve({ data: null, error: "invalid email or password" }),
+      json: () =>
+        Promise.resolve({ data: null, error: "invalid email or password" }),
     });
 
     await expect(apiFetch("/auth/login")).rejects.toThrow(

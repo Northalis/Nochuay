@@ -16,6 +16,7 @@ import {
   getPage,
   updatePage,
   deletePage,
+  uploadPageAsset,
 } from "@/lib/page-api";
 
 const mockApiFetch = apiFetch as jest.MockedFunction<typeof apiFetch>;
@@ -27,9 +28,7 @@ describe("page-api", () => {
 
   describe("fetchSidebarTree", () => {
     test("calls apiFetch with correct path", async () => {
-      const mockTree = [
-        { id: "1", title: "Page 1", children: [], depth: 0 },
-      ];
+      const mockTree = [{ id: "1", title: "Page 1", children: [], depth: 0 }];
       mockApiFetch.mockResolvedValueOnce(mockTree);
 
       const result = await fetchSidebarTree();
@@ -129,6 +128,35 @@ describe("page-api", () => {
         method: "DELETE",
       });
       expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe("uploadPageAsset", () => {
+    test("sends multipart POST to page assets endpoint", async () => {
+      const mockUploaded = {
+        url: "/assets/user-1/page-1/file.pdf",
+        contentType: "application/pdf",
+        size: 1234,
+        name: "file.pdf",
+      };
+      mockApiFetch.mockResolvedValueOnce(mockUploaded);
+
+      const file = new File(["hello"], "file.pdf", {
+        type: "application/pdf",
+      });
+
+      const result = await uploadPageAsset("page-1", "file", file);
+
+      expect(mockApiFetch).toHaveBeenCalledTimes(1);
+      const [path, options] = mockApiFetch.mock.calls[0];
+      expect(path).toBe("/pages/page-1/assets");
+      expect(options?.method).toBe("POST");
+      expect(options?.body).toBeInstanceOf(FormData);
+
+      const formData = options?.body as FormData;
+      expect(formData.get("kind")).toBe("file");
+      expect(formData.get("file")).toBe(file);
+      expect(result).toEqual(mockUploaded);
     });
   });
 });

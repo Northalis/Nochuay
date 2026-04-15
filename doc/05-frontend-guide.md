@@ -45,6 +45,7 @@ nochuay-front/
 │   │   └── SidebarItem.tsx       # Recursive page tree item
 │   ├── providers/                # Context providers
 │   │   ├── auth-guard.tsx        # Auth protection wrapper
+│   │   ├── theme-provider.tsx    # Applies persisted dark/light mode
 │   │   └── query-provider.tsx    # TanStack Query provider
 │   └── ui/                       # shadcn/ui components
 │       ├── button.tsx
@@ -61,6 +62,7 @@ nochuay-front/
 ├── store/
 │   ├── use-user-store.ts         # Auth state (Zustand)
 │   └── use-sidebar-store.ts      # Sidebar UI state (Zustand)
+│   └── use-theme-store.ts        # Theme preference (light/dark)
 └── middleware.ts                  # Next.js edge middleware
 ```
 
@@ -172,13 +174,14 @@ const data = await apiFetch<Page>("/pages/some-uuid");
 
 Typed wrapper functions for page-related API calls:
 
-| Function               | Method | Endpoint         | Parameters                    |
-| ---------------------- | ------ | ---------------- | ----------------------------- |
-| `fetchSidebarTree()`   | GET    | `/pages/sidebar` | None                          |
-| `createPage(body)`     | POST   | `/pages`         | `{ parentId?, title? }`       |
-| `getPage(id)`          | GET    | `/pages/:id`     | Page UUID                     |
-| `updatePage(id, body)` | PATCH  | `/pages/:id`     | `{ title?, icon?, content? }` |
-| `deletePage(id)`       | DELETE | `/pages/:id`     | Page UUID                     |
+| Function               | Method | Endpoint            | Parameters                    |
+| ---------------------- | ------ | ------------------- | ----------------------------- |
+| `fetchSidebarTree()`   | GET    | `/pages/sidebar`    | None                          |
+| `createPage(body)`     | POST   | `/pages`            | `{ parentId?, title? }`       |
+| `getPage(id)`          | GET    | `/pages/:id`        | Page UUID                     |
+| `updatePage(id, body)` | PATCH  | `/pages/:id`        | `{ title?, icon?, content? }` |
+| `deletePage(id)`       | DELETE | `/pages/:id`        | Page UUID                     |
+| `uploadPageAsset()`    | POST   | `/pages/:id/assets` | `(id, kind, file)`            |
 
 ---
 
@@ -215,6 +218,7 @@ The main navigation panel displayed on the left side of the application.
 **Features:**
 
 - **Profile dropdown:** Shows user email and logout button
+- **Theme switch:** Light/dark toggle is available inside profile dropdown
 - **Action buttons:** Search (placeholder), Settings (placeholder), New Page
 - **Page tree:** Recursively renders `SidebarItem` components from sidebar tree data
 - **Loading/error states:** Shows spinner while loading, error message on failure
@@ -255,6 +259,7 @@ The rich text editor wrapper component. Dynamically imported (no SSR) to avoid B
 
 - **Auto-save:** Changes are debounced by 1 second, then sent via `PATCH /pages/:id`
 - **Custom schema:** Extends default BlockNote blocks with a custom `page` block type
+- **Direct uploads via slash menu:** `/image` and `/file` now open local file picker and upload to backend, then insert returned URL
 - **Slash menu:** Adds a "Page" command that creates a child page and inserts a page block
 - **Page block cleanup:** Automatically detects and removes page blocks whose referenced pages have been deleted
 - **Page block deletion:** When a page block is removed from the editor, the corresponding child page is deleted from the backend
@@ -348,6 +353,13 @@ The application supports light and dark modes via CSS custom properties defined 
 - `--sidebar` / `--sidebar-foreground` — sidebar panel colors
 - `--primary` / `--primary-foreground` — primary action colors
 - `--destructive` — error/delete action color
+
+Runtime behavior is handled by `useThemeStore` and `ThemeProvider`:
+
+- Default mode is **light**
+- Users toggle mode from the sidebar profile menu
+- Preference persists in `localStorage`
+- Root layout applies the stored mode before hydration to prevent flicker
 
 ---
 

@@ -10,6 +10,8 @@ import {
   LogOut,
   User,
   Loader2,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,6 +19,7 @@ import SidebarItem from "./SidebarItem";
 import { useSidebarTree, useCreatePage } from "@/hooks/use-pages";
 import { useUserStore } from "@/store/use-user-store";
 import { useSidebarStore } from "@/store/use-sidebar-store";
+import { useThemeStore } from "@/store/use-theme-store";
 
 interface SidebarProps {
   onClose: () => void;
@@ -29,6 +32,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const createPage = useCreatePage();
   const { user, logout } = useUserStore();
   const resetSidebar = useSidebarStore((state) => state.reset);
+  const themeMode = useThemeStore((state) => state.mode);
+  const toggleThemeMode = useThemeStore((state) => state.toggleMode);
 
   // ── Profile dropdown ──────────────────────────────────────
   const [profileOpen, setProfileOpen] = useState(false);
@@ -82,6 +87,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   {user.email}
                 </div>
               )}
+              <button
+                onClick={toggleThemeMode}
+                className="flex items-center justify-between gap-2 w-full px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                <span className="flex items-center gap-2">
+                  {themeMode === "dark" ? (
+                    <Sun size={14} />
+                  ) : (
+                    <Moon size={14} />
+                  )}
+                  Theme
+                </span>
+                <span className="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
+                  {themeMode}
+                </span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -154,7 +175,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* Footer */}
       <div className="px-3 py-3 border-t border-neutral-200 dark:border-neutral-800">
         <p className="text-xs text-neutral-400 dark:text-neutral-500">
-          Nochuay v1.0.0
+          Nochuay v1.1.0
         </p>
       </div>
     </div>
