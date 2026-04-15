@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import { Page, PageNode } from "@/lib/types";
+import { Page, PageNode, UploadedAsset } from "@/lib/types";
 
 /* ── Sidebar ────────────────────────────────────────────────── */
 export function fetchSidebarTree(): Promise<PageNode[]> {
@@ -37,5 +37,20 @@ export function updatePage(
 export function deletePage(id: string): Promise<{ success: boolean }> {
   return apiFetch<{ success: boolean }>(`/pages/${id}`, {
     method: "DELETE",
+  });
+}
+
+export function uploadPageAsset(
+  id: string,
+  kind: "image" | "file",
+  file: File,
+): Promise<UploadedAsset> {
+  const formData = new FormData();
+  formData.append("kind", kind);
+  formData.append("file", file);
+
+  return apiFetch<UploadedAsset>(`/pages/${id}/assets`, {
+    method: "POST",
+    body: formData,
   });
 }
