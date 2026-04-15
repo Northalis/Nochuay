@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   useCreateBlockNote,
   SuggestionMenuController,
@@ -11,11 +11,13 @@ import {
   filterSuggestionItems,
   insertOrUpdateBlockForSlashMenu,
 } from "@blocknote/core/extensions";
-import { FileText } from "lucide-react";
+import { FileImage, FileText, Paperclip } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Page, PageNode } from "@/lib/types";
 import { pageKeys, useSidebarTree } from "@/hooks/use-pages";
+import { uploadPageAsset } from "@/lib/page-api";
+import { useThemeStore } from "@/store/use-theme-store";
 import { schema } from "./editor-schema";
 
 import "@blocknote/core/fonts/inter.css";
@@ -40,34 +42,43 @@ interface BlockNoteEditorProps {
   initialContent: string; // JSON-stringified Block[]
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+
+function toAbsoluteAssetURL(pathOrURL: string): string {
+  if (pathOrURL.startsWith("http://") || pathOrURL.startsWith("https://")) {
+    return pathOrURL;
+  }
+
+  const normalizedBase = API_BASE.replace(/\/api\/?$/, "").replace(/\/$/, "");
+  const normalizedPath = pathOrURL.startsWith("/")
+    ? pathOrURL
+    : `/${pathOrURL}`;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 export default function BlockNoteEditor({
   pageId,
   initialContent,
 }: BlockNoteEditorProps) {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
+  const themeMode = useThemeStore((state) => state.mode);
 
   // Track page-block pageIds so we can detect removals in onChange
   const knownPageBlockIds = useRef<Set<string>>(new Set());
 
   // Parse initial content safely
-  const parsedContent = (() => {
+  const parsedContent = useMemo(() => {
     try {
       const parsed = JSON.parse(initialContent);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Seed the known page-block IDs from initial content
-        for (const block of parsed) {
-          if (block.type === "page" && block.props?.pageId) {
-            knownPageBlockIds.current.add(block.props.pageId);
-          }
-        }
         return parsed;
       }
       return undefined;
     } catch {
       return undefined;
     }
-  })();
+  }, [initialContent]);
 
   const editor = useCreateBlockNote({
     schema,
@@ -99,6 +110,88 @@ export default function BlockNoteEditor({
   // Subscribe to sidebar tree data to detect deleted pages
   const { data: sidebarPages } = useSidebarTree();
 
+  useEffect(() => {
+    const next = new Set<string>();
+    if (parsedContent) {
+      for (const block of parsedContent) {
+        if (block.type === "page" && block.props?.pageId) {
+          next.add(block.props.pageId as string);
+        }
+      }
+    }
+    knownPageBlockIds.current = next;
+  }, [pageId, parsedContent]);
+
+  const pickFile = useCallback((accept: string) => {
+    return new Promise<File | null>((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = accept;
+      input.onchange = () => {
+        resolve(input.files?.[0] ?? null);
+      };
+      input.click();
+    });
+  }, []);
+
+  const handleUploadSlashAction = useCallback(
+    async (
+      editorInstance: typeof editor,
+      kind: "image" | "file",
+      accept: string,
+    ) => {
+      const selectedFile = await pickFile(accept);
+      if (!selectedFile) return;
+
+      try {
+        const uploaded = await uploadPageAsset(pageId, kind, selectedFile);
+        const assetURL = toAbsoluteAssetURL(uploaded.url);
+
+        if (kind === "image") {
+          insertOrUpdateBlockForSlashMenu(
+            editorInstance as never,
+            {
+              type: "image",
+              props: {
+                url: assetURL,
+              },
+            } as never,
+          );
+          return;
+        }
+
+        try {
+          insertOrUpdateBlockForSlashMenu(
+            editorInstance as never,
+            {
+              type: "file",
+              props: {
+                url: assetURL,
+                name: uploaded.name,
+              },
+            } as never,
+          );
+        } catch {
+          // Fallback for environments where file blocks are unavailable.
+          editorInstance.insertBlocks(
+            [
+              {
+                type: "paragraph",
+                content: `${uploaded.name}: ${assetURL}`,
+              },
+            ],
+            editorInstance.getTextCursorPosition().block,
+            "after",
+          );
+        }
+      } catch (err) {
+        console.error("Upload failed:", err);
+        window.alert("Upload failed. Please check file type and size.");
+      }
+    },
+    [pageId, pickFile],
+  );
+
   // Auto-remove page blocks whose referenced page no longer exists
   useEffect(() => {
     if (!sidebarPages) return;
@@ -125,48 +218,116 @@ export default function BlockNoteEditor({
   }, [sidebarPages, editor, saveContent]);
 
   // Build the slash menu items: default items + custom "Page" command
-  const getSlashMenuItems = (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    editorInstance: typeof editor,
-  ) => [
-    ...getDefaultReactSlashMenuItems(editorInstance),
-    {
-      title: "Page",
+  const getSlashMenuItems = (editorInstance: typeof editor) => {
+    const makeImageItem = () => ({
+      title: "Image",
       onItemClick: async () => {
-        try {
-          // Create a new child page under the current page
-          const newPage = await apiFetch<Page>("/pages", {
-            method: "POST",
-            body: JSON.stringify({
-              parentId: pageId,
-              title: "Untitled",
-            }),
-          });
-
-          // Insert the page block into the editor
-          insertOrUpdateBlockForSlashMenu(editorInstance, {
-            type: "page" as const,
-            props: {
-              pageId: newPage.id,
-              pageTitle: newPage.title,
-            },
-          });
-
-          // Track the new page block so it isn't treated as "removed"
-          knownPageBlockIds.current.add(newPage.id);
-
-          // Refresh the sidebar to show the new child page
-          queryClient.invalidateQueries({ queryKey: pageKeys.sidebar.all });
-        } catch (err) {
-          console.error("Failed to create nested page:", err);
-        }
+        await handleUploadSlashAction(
+          editorInstance,
+          "image",
+          ".png,.jpg,.jpeg,.webp,.gif,.svg,image/*",
+        );
       },
-      aliases: ["page", "subpage", "nested", "child"],
-      group: "Other",
-      icon: <FileText size={18} />,
-      subtext: "Create a nested page",
-    },
-  ];
+      aliases: ["image", "photo", "picture", "upload"],
+      group: "Media",
+      icon: <FileImage size={18} />,
+      subtext: "Upload an image from your device",
+    });
+
+    const makeFileItem = () => ({
+      title: "File",
+      onItemClick: async () => {
+        await handleUploadSlashAction(
+          editorInstance,
+          "file",
+          ".pdf,.txt,.doc,.docx",
+        );
+      },
+      aliases: ["file", "document", "attachment", "upload"],
+      group: "Media",
+      icon: <Paperclip size={18} />,
+      subtext: "Upload a file from your device",
+    });
+
+    const defaultItems = getDefaultReactSlashMenuItems(editorInstance);
+    let hasImageItem = false;
+    let hasFileItem = false;
+
+    const menuItems = defaultItems.map((item) => {
+      const title = item.title.toLowerCase();
+
+      if (title === "image") {
+        hasImageItem = true;
+        return makeImageItem();
+      }
+
+      if (title === "file") {
+        hasFileItem = true;
+        return makeFileItem();
+      }
+
+      return item;
+    });
+
+    if (!hasImageItem || !hasFileItem) {
+      const mediaIndices = menuItems
+        .map((item, index) => (item.group === "Media" ? index : -1))
+        .filter((index) => index >= 0);
+
+      const insertionIndex =
+        mediaIndices.length > 0 ? mediaIndices[mediaIndices.length - 1] + 1 : 0;
+
+      const missingMediaItems = [];
+      if (!hasImageItem) {
+        missingMediaItems.push(makeImageItem());
+      }
+      if (!hasFileItem) {
+        missingMediaItems.push(makeFileItem());
+      }
+
+      menuItems.splice(insertionIndex, 0, ...missingMediaItems);
+    }
+
+    return [
+      ...menuItems,
+      {
+        title: "Page",
+        onItemClick: async () => {
+          try {
+            // Create a new child page under the current page
+            const newPage = await apiFetch<Page>("/pages", {
+              method: "POST",
+              body: JSON.stringify({
+                parentId: pageId,
+                title: "Untitled",
+              }),
+            });
+
+            // Insert the page block into the editor
+            insertOrUpdateBlockForSlashMenu(editorInstance, {
+              type: "page" as const,
+              props: {
+                pageId: newPage.id,
+                pageTitle: newPage.title,
+              },
+            });
+
+            // Track the new page block so it isn't treated as "removed"
+            knownPageBlockIds.current.add(newPage.id);
+
+            // Refresh the sidebar to show the new child page
+            queryClient.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+          } catch (err) {
+            console.error("Failed to create nested page:", err);
+          }
+        },
+        aliases: ["page", "subpage", "nested", "child"],
+        group: "Other",
+        icon: <FileText size={18} />,
+        subtext: "Create a nested page",
+      },
+    ];
+  };
 
   // Detect page blocks removed from editor and delete the actual pages
   const handleRemovedPageBlocks = useCallback(
@@ -213,7 +374,7 @@ export default function BlockNoteEditor({
           handleRemovedPageBlocks(blocks);
           saveContent(blocks);
         }}
-        theme="light"
+        theme={themeMode}
         slashMenu={false}
       >
         <SuggestionMenuController

@@ -51,6 +51,24 @@ describe("apiFetch", () => {
     expect(options.headers["Content-Type"]).toBe("application/json");
   });
 
+  test("does not force JSON content-type for FormData bodies", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { ok: true }, error: null }),
+    });
+
+    const formData = new FormData();
+    formData.append("kind", "image");
+
+    await apiFetch("/pages/page-1/assets", {
+      method: "POST",
+      body: formData,
+    });
+
+    const [, options] = mockFetch.mock.calls[0];
+    expect(options.headers["Content-Type"]).toBeUndefined();
+  });
+
   test("attaches Authorization header when token exists in localStorage", async () => {
     localStorageMock.getItem.mockImplementation((key: string) => {
       if (key === "token") return "my-jwt-token";
