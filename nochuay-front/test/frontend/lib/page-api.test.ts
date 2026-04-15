@@ -28,9 +28,7 @@ describe("page-api", () => {
 
   describe("fetchSidebarTree", () => {
     test("calls apiFetch with correct path", async () => {
-      const mockTree = [
-        { id: "1", title: "Page 1", children: [], depth: 0 },
-      ];
+      const mockTree = [{ id: "1", title: "Page 1", children: [], depth: 0 }];
       mockApiFetch.mockResolvedValueOnce(mockTree);
 
       const result = await fetchSidebarTree();

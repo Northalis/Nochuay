@@ -92,7 +92,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 className="flex items-center justify-between gap-2 w-full px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               >
                 <span className="flex items-center gap-2">
-                  {themeMode === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+                  {themeMode === "dark" ? (
+                    <Sun size={14} />
+                  ) : (
+                    <Moon size={14} />
+                  )}
                   Theme
                 </span>
                 <span className="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
