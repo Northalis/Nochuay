@@ -175,7 +175,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* Footer */}
       <div className="px-3 py-3 border-t border-neutral-200 dark:border-neutral-800">
         <p className="text-xs text-neutral-400 dark:text-neutral-500">
-          Nochuay v1.1.0
+          Nochuay v1.2.0
         </p>
       </div>
     </div>
