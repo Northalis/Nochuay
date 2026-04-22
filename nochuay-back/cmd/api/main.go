@@ -36,7 +36,11 @@ func main() {
 	pageService := service.NewPageService(pageRepo)
 
 	authHandler := handler.NewAuthHandler(authService)
-	pageHandler := handler.NewPageHandler(pageService)
+	pageHandler := handler.NewPageHandler(
+		pageService,
+		handler.WithUploadDir(cfg.UploadDir),
+		handler.WithMaxUploadSizeBytes(cfg.MaxUploadSizeBytes),
+	)
 
 	// Auth middleware
 	authMiddleware := middleware.Auth(authService)
@@ -61,6 +65,10 @@ func main() {
 	mux.Handle("DELETE /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.DeletePage)))
 	mux.Handle("PUT /pages/{id}/content", authMiddleware(http.HandlerFunc(pageHandler.SaveContent)))
 	mux.Handle("GET /pages/{id}/content", authMiddleware(http.HandlerFunc(pageHandler.GetContent)))
+	mux.Handle("POST /pages/{id}/assets", authMiddleware(http.HandlerFunc(pageHandler.UploadAsset)))
+
+	// Uploaded assets are served via opaque URLs to support inline rendering in the editor.
+	mux.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(cfg.UploadDir))))
 
 	// 5. CORS middleware
 	corsHandler := corsMiddleware(mux, cfg.CORSAllowedOrigins)

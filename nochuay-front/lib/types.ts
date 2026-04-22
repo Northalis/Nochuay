@@ -13,3 +13,10 @@ export interface PageNode extends Page {
   children: PageNode[];
   depth: number;
 }
+
+export interface UploadedAsset {
+  url: string;
+  contentType: string;
+  size: number;
+  name: string;
+}

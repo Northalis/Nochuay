@@ -1,0 +1,32 @@
+[
+  {
+    "description": "Wrong password",
+    "body": {
+      "email": "testuser@example.com",
+      "password": "wrongPassword"
+    }
+  },
+  {
+    "description": "Non-existent email",
+    "body": {
+      "email": "nobody@example.com",
+      "password": "securePass123"
+    }
+  },
+  {
+    "description": "Missing email",
+    "body": {
+      "password": "securePass123"
+    }
+  },
+  {
+    "description": "Missing password",
+    "body": {
+      "email": "testuser@example.com"
+    }
+  },
+  {
+    "description": "Empty body",
+    "body": {}
+  }
+]

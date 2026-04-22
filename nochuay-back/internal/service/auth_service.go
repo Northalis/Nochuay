@@ -2,14 +2,13 @@ package service
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/Northalis/Nochuay/nochuay-back/internal/model"
 	"github.com/Northalis/Nochuay/nochuay-back/internal/repository"
 )
@@ -45,7 +44,7 @@ func (s *authService) Signup(ctx context.Context, email, password string) (strin
 		return "", nil, fmt.Errorf("user with this email already exists")
 	}
 
-	// Hash password with Argon2
+	// Hash password with bcrypt
 	hash, err := hashPassword(password)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to hash password: %w", err)
@@ -130,58 +129,17 @@ func (s *authService) generateToken(userID uuid.UUID) (string, error) {
 	return token.SignedString(s.jwtSecret)
 }
 
-// --- Argon2 Password Hashing ---
-
-const (
-	argonTime    = 1
-	argonMemory  = 64 * 1024
-	argonThreads = 4
-	argonKeyLen  = 32
-	saltLen      = 16
-)
+// --- Bcrypt Password Hashing ---
 
 func hashPassword(password string) (string, error) {
-	salt := make([]byte, saltLen)
-	if _, err := rand.Read(salt); err != nil {
-		return "", fmt.Errorf("failed to generate salt: %w", err)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash password: %w", err)
 	}
-
-	hash := argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
-
-	// Encode as: base64(salt)$base64(hash)
-	saltB64 := base64.RawStdEncoding.EncodeToString(salt)
-	hashB64 := base64.RawStdEncoding.EncodeToString(hash)
-
-	return fmt.Sprintf("%s$%s", saltB64, hashB64), nil
+	return string(hash), nil
 }
 
-func verifyPassword(password, encoded string) bool {
-	// Split salt$hash
-	var saltB64, hashB64 string
-	n, _ := fmt.Sscanf(encoded, "%[^$]$%s", &saltB64, &hashB64)
-	if n != 2 {
-		return false
-	}
-
-	salt, err := base64.RawStdEncoding.DecodeString(saltB64)
-	if err != nil {
-		return false
-	}
-
-	expectedHash, err := base64.RawStdEncoding.DecodeString(hashB64)
-	if err != nil {
-		return false
-	}
-
-	computedHash := argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
-
-	// Constant-time comparison
-	if len(computedHash) != len(expectedHash) {
-		return false
-	}
-	result := byte(0)
-	for i := range computedHash {
-		result |= computedHash[i] ^ expectedHash[i]
-	}
-	return result == 0
+func verifyPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config holds all configuration for the application.
@@ -15,6 +16,8 @@ type Config struct {
 	DBName             string
 	JWTSecret          string
 	CORSAllowedOrigins string
+	UploadDir          string
+	MaxUploadSizeBytes int64
 }
 
 // Load reads configuration from environment variables.
@@ -28,6 +31,8 @@ func Load() (*Config, error) {
 		DBName:             getEnv("DB_NAME", "nochuay_db"),
 		JWTSecret:          getEnv("JWT_SECRET", ""),
 		CORSAllowedOrigins: getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000"),
+		UploadDir:          getEnv("UPLOAD_DIR", "uploads"),
+		MaxUploadSizeBytes: getEnvInt64("MAX_UPLOAD_SIZE_BYTES", 10*1024*1024),
 	}
 
 	if cfg.DBPassword == "" {
@@ -53,4 +58,18 @@ func getEnv(key, fallback string) string {
 		return val
 	}
 	return fallback
+}
+
+func getEnvInt64(key string, fallback int64) int64 {
+	val, ok := os.LookupEnv(key)
+	if !ok || val == "" {
+		return fallback
+	}
+
+	parsed, err := strconv.ParseInt(val, 10, 64)
+	if err != nil || parsed <= 0 {
+		return fallback
+	}
+
+	return parsed
 }

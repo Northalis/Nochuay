@@ -66,9 +66,11 @@ services:
 
   # 4. Next.js Frontend
   frontend:
-    image: node:22-alpine
+    build:
+      context: ./nochuay-front
+      dockerfile: Dockerfile
+      target: dev
     container_name: nochuay_frontend
-    working_dir: /app
     ports:
       - "3000:3000"
     env_file:
@@ -76,7 +78,6 @@ services:
     volumes:
       - ./nochuay-front:/app
       - frontend_node_modules:/app/node_modules
-    command: sh -c "npm install && npm run dev"
     depends_on:
       - app
 
