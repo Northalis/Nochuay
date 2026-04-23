@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchSidebarTree,
+  searchPages,
   createPage,
   updatePage,
   deletePage,
@@ -18,6 +19,11 @@ export const pageKeys = {
   detailPrefix: ["pages", "detail"] as const,
   detail: (userID: string | null, id: string) =>
     ["pages", "detail", userID ?? "anonymous", id] as const,
+  search: {
+    all: ["pages", "search"] as const,
+    byUser: (userID: string | null, query: string) =>
+      ["pages", "search", userID ?? "anonymous", query] as const,
+  },
 };
 
 /* ── Sidebar tree query ──────────────────────────────────────── */
@@ -31,6 +37,18 @@ export function useSidebarTree() {
   });
 }
 
+/* ── Page search query ──────────────────────────────────────── */
+export function usePageSearch(rawQuery: string, enabled = true) {
+  const userID = useUserStore((state) => state.user?.id ?? null);
+  const query = rawQuery.trim();
+
+  return useQuery({
+    queryKey: pageKeys.search.byUser(userID, query.toLowerCase()),
+    queryFn: () => searchPages(query),
+    enabled: enabled && !!userID && query.length > 0,
+  });
+}
+
 /* ── Create page mutation ────────────────────────────────────── */
 export function useCreatePage() {
   const qc = useQueryClient();
@@ -39,6 +57,7 @@ export function useCreatePage() {
       createPage(body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+      qc.invalidateQueries({ queryKey: pageKeys.search.all });
     },
   });
 }
@@ -62,6 +81,7 @@ export function useUpdatePage() {
       const pageID = updatedPage.id || variables.id;
 
       qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+      qc.invalidateQueries({ queryKey: pageKeys.search.all });
       qc.setQueryData(pageKeys.detail(userID, pageID), updatedPage);
       qc.invalidateQueries({ queryKey: pageKeys.detailPrefix });
     },
@@ -75,6 +95,7 @@ export function useDeletePage() {
     mutationFn: (id: string) => deletePage(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+      qc.invalidateQueries({ queryKey: pageKeys.search.all });
       qc.invalidateQueries({ queryKey: pageKeys.detailPrefix });
     },
   });

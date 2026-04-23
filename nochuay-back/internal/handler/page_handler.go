@@ -279,6 +279,33 @@ func (h *PageHandler) GetSidebar(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, tree)
 }
 
+// SearchPages handles GET /pages/search?q=...
+func (h *PageHandler) SearchPages(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	if query == "" {
+		response.Error(w, http.StatusBadRequest, "query parameter 'q' is required")
+		return
+	}
+
+	results, err := h.pageService.SearchPages(r.Context(), userID, query, 25)
+	if err != nil {
+		if strings.Contains(err.Error(), "required") {
+			response.Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to search pages")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, results)
+}
+
 // DeletePage handles DELETE /pages/{id}.
 func (h *PageHandler) DeletePage(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())

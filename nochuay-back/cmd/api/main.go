@@ -59,6 +59,7 @@ func main() {
 
 	// Page routes (protected)
 	mux.Handle("GET /pages/sidebar", authMiddleware(http.HandlerFunc(pageHandler.GetSidebar)))
+	mux.Handle("GET /pages/search", authMiddleware(http.HandlerFunc(pageHandler.SearchPages)))
 	mux.Handle("POST /pages", authMiddleware(http.HandlerFunc(pageHandler.CreatePage)))
 	mux.Handle("GET /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.GetPage)))
 	mux.Handle("PATCH /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.UpdatePage)))

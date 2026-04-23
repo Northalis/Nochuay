@@ -474,6 +474,90 @@ func TestGetSidebar_ServiceError(t *testing.T) {
 	}
 }
 
+// ── GET /pages/search?q=... (SearchPages) ─────────────────
+
+func TestSearchPages_Success(t *testing.T) {
+	userID := uuid.New()
+
+	mock := &MockPageService{
+		SearchPagesFn: func(_ context.Context, uid uuid.UUID, query string, limit int) ([]model.PageSearchResult, error) {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			if query != "road" {
+				t.Fatalf("expected query 'road', got '%s'", query)
+			}
+			if limit != 25 {
+				t.Fatalf("expected limit 25, got %d", limit)
+			}
+
+			return []model.PageSearchResult{
+				{ID: uuid.New(), Title: "Roadmap"},
+				{ID: uuid.New(), Title: "Weekly Road"},
+			}, nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/pages/search?q=road", nil)
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.SearchPages(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestSearchPages_MissingQuery(t *testing.T) {
+	mock := &MockPageService{}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/pages/search", nil)
+	req = injectUserID(req, uuid.New())
+
+	w := httptest.NewRecorder()
+	h.SearchPages(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", w.Code)
+	}
+}
+
+func TestSearchPages_Unauthorized(t *testing.T) {
+	mock := &MockPageService{}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/pages/search?q=abc", nil)
+
+	w := httptest.NewRecorder()
+	h.SearchPages(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", w.Code)
+	}
+}
+
+func TestSearchPages_ServiceError(t *testing.T) {
+	mock := &MockPageService{
+		SearchPagesFn: func(_ context.Context, _ uuid.UUID, _ string, _ int) ([]model.PageSearchResult, error) {
+			return nil, fmt.Errorf("database unavailable")
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/pages/search?q=abc", nil)
+	req = injectUserID(req, uuid.New())
+
+	w := httptest.NewRecorder()
+	h.SearchPages(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d", w.Code)
+	}
+}
+
 // ── PUT /pages/{id}/content (SaveContent) ───────────────────
 
 func TestSaveContent_Success(t *testing.T) {

@@ -1,9 +1,14 @@
 import { apiFetch } from "@/lib/api";
-import { Page, PageNode, UploadedAsset } from "@/lib/types";
+import { Page, PageNode, PageSearchResult, UploadedAsset } from "@/lib/types";
 
 /* ── Sidebar ────────────────────────────────────────────────── */
 export function fetchSidebarTree(): Promise<PageNode[]> {
   return apiFetch<PageNode[]>("/pages/sidebar");
+}
+
+export function searchPages(query: string): Promise<PageSearchResult[]> {
+  const encoded = encodeURIComponent(query);
+  return apiFetch<PageSearchResult[]>(`/pages/search?q=${encoded}`);
 }
 
 /* ── CRUD ────────────────────────────────────────────────────── */

@@ -36,6 +36,7 @@ type MockPageService struct {
 	UpdatePageFn     func(ctx context.Context, userID, pageID uuid.UUID, updates map[string]any) (*model.Page, error)
 	DeletePageFn     func(ctx context.Context, userID, pageID uuid.UUID) error
 	GetSidebarTreeFn func(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error)
+	SearchPagesFn    func(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error)
 	SaveContentFn    func(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error)
 	GetContentFn     func(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error)
 }
@@ -58,6 +59,10 @@ func (m *MockPageService) DeletePage(ctx context.Context, userID, pageID uuid.UU
 
 func (m *MockPageService) GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error) {
 	return m.GetSidebarTreeFn(ctx, userID)
+}
+
+func (m *MockPageService) SearchPages(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error) {
+	return m.SearchPagesFn(ctx, userID, query, limit)
 }
 
 func (m *MockPageService) SaveContent(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error) {
