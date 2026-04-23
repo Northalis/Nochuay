@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Northalis/Nochuay/nochuay-back/internal/model"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/Northalis/Nochuay/nochuay-back/internal/model"
 )
 
 // PageRepository defines the interface for page data access.
@@ -18,6 +18,7 @@ type PageRepository interface {
 	UpdatePage(ctx context.Context, userID, pageID uuid.UUID, updates map[string]any) (*model.Page, error)
 	DeletePage(ctx context.Context, userID, pageID uuid.UUID) error
 	GetPagesByUserID(ctx context.Context, userID uuid.UUID) ([]model.Page, error)
+	SearchPagesByTitle(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error)
 	SaveContent(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error)
 	GetContent(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error)
 }
@@ -173,6 +174,39 @@ func (r *pageRepository) GetPagesByUserID(ctx context.Context, userID uuid.UUID)
 	}
 
 	return pages, nil
+}
+
+func (r *pageRepository) SearchPagesByTitle(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, parent_id, title, icon
+		 FROM pages
+		 WHERE user_id = $1
+		   AND title ILIKE '%' || $2 || '%'
+		 ORDER BY
+		   CASE WHEN title ILIKE $2 || '%' THEN 0 ELSE 1 END,
+		   LOWER(title) ASC
+		 LIMIT $3`,
+		userID, query, limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search pages: %w", err)
+	}
+	defer rows.Close()
+
+	results := make([]model.PageSearchResult, 0)
+	for rows.Next() {
+		var item model.PageSearchResult
+		if err := rows.Scan(&item.ID, &item.ParentID, &item.Title, &item.Icon); err != nil {
+			return nil, fmt.Errorf("failed to scan search result: %w", err)
+		}
+		results = append(results, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed iterating search results: %w", err)
+	}
+
+	return results, nil
 }
 
 // SaveContent replaces the content JSONB column for a specific page.

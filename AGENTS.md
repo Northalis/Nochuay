@@ -6,7 +6,7 @@
 
 **Name:** Nochuay (Notion Clone)
 **Type:** Hierarchical Note-Taking Application
-**Goal:** MVP v1.0.1 stabilization (post-v1.0.0 bug-fix iteration)
+**Goal:** v1.3.0 UI refinement and bug fixes
 **Core Complexity:**
 
 1.  **Recursive Data Structures:** Pages can be infinitely nested inside other pages.

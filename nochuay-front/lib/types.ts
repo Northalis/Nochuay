@@ -20,3 +20,10 @@ export interface UploadedAsset {
   size: number;
   name: string;
 }
+
+export interface PageSearchResult {
+  id: string;
+  parentId: string | null;
+  title: string;
+  icon?: string;
+}

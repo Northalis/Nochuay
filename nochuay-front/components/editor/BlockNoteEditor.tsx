@@ -371,6 +371,7 @@ export default function BlockNoteEditor({
         editor={editor}
         onChange={() => {
           const blocks = editor.document;
+
           handleRemovedPageBlocks(blocks);
           saveContent(blocks);
         }}

@@ -25,6 +25,12 @@ func (m *MockAuthService) Signup(_ context.Context, _, _ string) (string, *model
 func (m *MockAuthService) Login(_ context.Context, _, _ string) (string, *model.User, error) {
 	return "", nil, nil
 }
+func (m *MockAuthService) UpdateAccountEmail(_ context.Context, _ uuid.UUID, _, _ string) (*model.User, error) {
+	return nil, nil
+}
+func (m *MockAuthService) UpdateAccountPassword(_ context.Context, _ uuid.UUID, _, _ string) error {
+	return nil
+}
 func (m *MockAuthService) ValidateToken(tokenString string) (uuid.UUID, error) {
 	return m.ValidateTokenFn(tokenString)
 }

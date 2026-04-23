@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
-	"github.com/google/uuid"
 	"github.com/Northalis/Nochuay/nochuay-back/internal/model"
 	"github.com/Northalis/Nochuay/nochuay-back/internal/repository"
+	"github.com/google/uuid"
 )
 
 // PageService defines the interface for page business logic.
@@ -17,6 +18,7 @@ type PageService interface {
 	UpdatePage(ctx context.Context, userID, pageID uuid.UUID, updates map[string]any) (*model.Page, error)
 	DeletePage(ctx context.Context, userID, pageID uuid.UUID) error
 	GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error)
+	SearchPages(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error)
 	SaveContent(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error)
 	GetContent(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error)
 }
@@ -156,6 +158,24 @@ func (s *pageService) GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]m
 		return nil, fmt.Errorf("failed to get pages: %w", err)
 	}
 	return BuildTree(pages), nil
+}
+
+func (s *pageService) SearchPages(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error) {
+	normalizedQuery := strings.TrimSpace(query)
+	if normalizedQuery == "" {
+		return nil, fmt.Errorf("search query is required")
+	}
+
+	if limit <= 0 || limit > 50 {
+		limit = 25
+	}
+
+	results, err := s.pageRepo.SearchPagesByTitle(ctx, userID, normalizedQuery, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search pages: %w", err)
+	}
+
+	return results, nil
 }
 
 // BuildTree constructs a nested PageNode tree from a flat list of pages.

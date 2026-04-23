@@ -9,6 +9,7 @@ interface UserState {
   token: string | null;
   user: User | null;
   setAuth: (token: string, user: User) => void;
+  updateEmail: (email: string) => void;
   logout: () => void;
   /** Restore token + user from localStorage into Zustand state */
   hydrate: () => void;
@@ -23,6 +24,17 @@ export const useUserStore = create<UserState>((set) => ({
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
     set({ token, user });
+  },
+
+  updateEmail: (email) => {
+    set((state) => {
+      if (!state.user) return state;
+
+      const updatedUser = { ...state.user, email };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return { user: updatedUser };
+    });
   },
 
   logout: () => {
