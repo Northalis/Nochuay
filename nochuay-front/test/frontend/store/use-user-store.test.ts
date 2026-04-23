@@ -70,6 +70,30 @@ describe("useUserStore", () => {
     expect(localStorageMock.removeItem).toHaveBeenCalledWith("user");
   });
 
+  test("updateEmail updates user email in state and localStorage", () => {
+    const { setAuth, updateEmail } = useUserStore.getState();
+    setAuth("jwt-token", { id: "1", email: "old@example.com" });
+
+    updateEmail("new@example.com");
+
+    const state = useUserStore.getState();
+    expect(state.user).toEqual({ id: "1", email: "new@example.com" });
+    expect(localStorageMock.setItem).toHaveBeenCalledWith(
+      "user",
+      JSON.stringify({ id: "1", email: "new@example.com" }),
+    );
+  });
+
+  test("updateEmail no-ops when user is null", () => {
+    const { updateEmail } = useUserStore.getState();
+
+    updateEmail("new@example.com");
+
+    const state = useUserStore.getState();
+    expect(state.user).toBeNull();
+    expect(localStorageMock.setItem).not.toHaveBeenCalled();
+  });
+
   test("hydrate restores token and user from localStorage", () => {
     localStorageMock.getItem.mockImplementation((key: string) => {
       if (key === "token") return "stored-token";

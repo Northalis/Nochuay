@@ -50,3 +50,11 @@ type PageNode struct {
 	Children []PageNode `json:"children"`
 	Depth    int        `json:"depth"`
 }
+
+// PageSearchResult is a lightweight projection used by title search.
+type PageSearchResult struct {
+	ID       uuid.UUID  `json:"id"`
+	ParentID *uuid.UUID `json:"parentId"`
+	Title    string     `json:"title"`
+	Icon     *string    `json:"icon,omitempty"`
+}

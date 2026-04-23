@@ -12,6 +12,7 @@ jest.mock("@/lib/api", () => ({
 import { apiFetch } from "@/lib/api";
 import {
   fetchSidebarTree,
+  searchPages,
   createPage,
   getPage,
   updatePage,
@@ -35,6 +36,18 @@ describe("page-api", () => {
 
       expect(mockApiFetch).toHaveBeenCalledWith("/pages/sidebar");
       expect(result).toEqual(mockTree);
+    });
+  });
+
+  describe("searchPages", () => {
+    test("calls apiFetch with encoded search query", async () => {
+      const mockResults = [{ id: "p1", title: "Roadmap" }];
+      mockApiFetch.mockResolvedValueOnce(mockResults);
+
+      const result = await searchPages("road map");
+
+      expect(mockApiFetch).toHaveBeenCalledWith("/pages/search?q=road%20map");
+      expect(result).toEqual(mockResults);
     });
   });
 

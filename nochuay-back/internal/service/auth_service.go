@@ -17,6 +17,8 @@ import (
 type AuthService interface {
 	Signup(ctx context.Context, email, password string) (string, *model.User, error)
 	Login(ctx context.Context, email, password string) (string, *model.User, error)
+	UpdateAccountEmail(ctx context.Context, userID uuid.UUID, currentPassword, newEmail string) (*model.User, error)
+	UpdateAccountPassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
 	ValidateToken(tokenString string) (uuid.UUID, error)
 }
 
@@ -87,6 +89,65 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 	}
 
 	return token, user, nil
+}
+
+// UpdateAccountEmail updates the authenticated user's email after verifying current password.
+func (s *authService) UpdateAccountEmail(ctx context.Context, userID uuid.UUID, currentPassword, newEmail string) (*model.User, error) {
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	if !verifyPassword(currentPassword, user.PasswordHash) {
+		return nil, fmt.Errorf("invalid current password")
+	}
+
+	existing, err := s.userRepo.GetUserByEmail(ctx, newEmail)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check existing email: %w", err)
+	}
+	if existing != nil && existing.ID != userID {
+		return nil, fmt.Errorf("user with this email already exists")
+	}
+
+	updatedUser, err := s.userRepo.UpdateUserEmail(ctx, userID, newEmail)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update account email: %w", err)
+	}
+	if updatedUser == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return updatedUser, nil
+}
+
+// UpdateAccountPassword updates the authenticated user's password after verifying current password.
+func (s *authService) UpdateAccountPassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+
+	if !verifyPassword(currentPassword, user.PasswordHash) {
+		return fmt.Errorf("invalid current password")
+	}
+
+	newPasswordHash, err := hashPassword(newPassword)
+	if err != nil {
+		return fmt.Errorf("failed to hash new password: %w", err)
+	}
+
+	if err := s.userRepo.UpdateUserPasswordHash(ctx, userID, newPasswordHash); err != nil {
+		return fmt.Errorf("failed to update account password: %w", err)
+	}
+
+	return nil
 }
 
 // ValidateToken parses and validates a JWT, returning the user ID.

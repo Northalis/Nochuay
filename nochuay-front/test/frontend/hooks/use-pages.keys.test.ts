@@ -42,6 +42,22 @@ describe("pageKeys", () => {
     ]);
   });
 
+  test("search key is scoped by user and query", () => {
+    expect(pageKeys.search.byUser("user-a", "roadmap")).toEqual([
+      "pages",
+      "search",
+      "user-a",
+      "roadmap",
+    ]);
+
+    expect(pageKeys.search.byUser("user-b", "roadmap")).toEqual([
+      "pages",
+      "search",
+      "user-b",
+      "roadmap",
+    ]);
+  });
+
   test("anonymous fallback is stable when user id is absent", () => {
     expect(pageKeys.sidebar.byUser(null)).toEqual([
       "pages",
@@ -54,6 +70,13 @@ describe("pageKeys", () => {
       "detail",
       "anonymous",
       "page-1",
+    ]);
+
+    expect(pageKeys.search.byUser(null, "roadmap")).toEqual([
+      "pages",
+      "search",
+      "anonymous",
+      "roadmap",
     ]);
   });
 });
