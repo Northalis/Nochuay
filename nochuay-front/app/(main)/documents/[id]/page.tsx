@@ -132,20 +132,6 @@ export default function DocumentPage({ params }: DocumentPageProps) {
     [scheduleTitleSave],
   );
 
-  const handleEditorHeadingChange = useCallback(
-    (headingTitle: string) => {
-      const normalized = normalizeTitle(headingTitle);
-
-      if (normalized === titleDraftRef.current) {
-        return;
-      }
-
-      setTitleDraft(normalized);
-      scheduleTitleSave(normalized);
-    },
-    [scheduleTitleSave],
-  );
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -207,7 +193,7 @@ export default function DocumentPage({ params }: DocumentPageProps) {
             }
             commitTitle(titleDraftRef.current);
           }}
-          className="w-full rounded-xl border border-transparent bg-transparent px-1 py-1 text-3xl font-bold text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 hover:border-neutral-200 focus:border-neutral-300 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:hover:border-neutral-700 dark:focus:border-neutral-600"
+          className="w-full rounded-xl border border-transparent bg-transparent px-1 py-1 text-4xl font-bold tracking-tight text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 hover:border-neutral-200 focus:border-neutral-300 md:text-5xl dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:hover:border-neutral-700 dark:focus:border-neutral-600"
           placeholder="Untitled"
           aria-label="Page title"
         />
@@ -223,8 +209,6 @@ export default function DocumentPage({ params }: DocumentPageProps) {
               ? page.content
               : JSON.stringify(page.content)
           }
-          titleForSync={normalizeTitle(titleDraft)}
-          onFirstHeadingChange={handleEditorHeadingChange}
         />
       </div>
     </div>

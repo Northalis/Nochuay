@@ -297,3 +297,167 @@ func TestLogin_ServiceInternalError(t *testing.T) {
 		t.Fatalf("expected status 500, got %d", w.Code)
 	}
 }
+
+// ── PATCH /auth/account/email ───────────────────────────────
+
+func TestUpdateAccountEmail_Success(t *testing.T) {
+	userID := uuid.New()
+	updatedUser := &model.User{
+		ID:        userID,
+		Email:     "new@example.com",
+		CreatedAt: time.Now(),
+	}
+
+	mock := &MockAuthService{
+		UpdateAccountEmailFn: func(_ context.Context, gotUserID uuid.UUID, currentPassword, newEmail string) (*model.User, error) {
+			if gotUserID != userID {
+				t.Fatalf("expected userID %s, got %s", userID, gotUserID)
+			}
+			if currentPassword != "password123" {
+				t.Fatalf("expected currentPassword password123, got %s", currentPassword)
+			}
+			if newEmail != "new@example.com" {
+				t.Fatalf("expected newEmail new@example.com, got %s", newEmail)
+			}
+
+			return updatedUser, nil
+		},
+	}
+
+	h := handler.NewAuthHandler(mock)
+	req := httptest.NewRequest(http.MethodPatch, "/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"new@example.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.UpdateAccountEmail(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestUpdateAccountEmail_Unauthorized(t *testing.T) {
+	mock := &MockAuthService{}
+	h := handler.NewAuthHandler(mock)
+
+	req := httptest.NewRequest(http.MethodPatch, "/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"new@example.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	h.UpdateAccountEmail(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", w.Code)
+	}
+}
+
+func TestUpdateAccountEmail_Conflict(t *testing.T) {
+	mock := &MockAuthService{
+		UpdateAccountEmailFn: func(_ context.Context, _ uuid.UUID, _, _ string) (*model.User, error) {
+			return nil, fmt.Errorf("user with this email already exists")
+		},
+	}
+
+	h := handler.NewAuthHandler(mock)
+	req := httptest.NewRequest(http.MethodPatch, "/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"existing@example.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req = injectUserID(req, uuid.New())
+
+	w := httptest.NewRecorder()
+	h.UpdateAccountEmail(w, req)
+
+	if w.Code != http.StatusConflict {
+		t.Fatalf("expected status 409, got %d", w.Code)
+	}
+}
+
+func TestUpdateAccountEmail_InvalidCurrentPassword(t *testing.T) {
+	mock := &MockAuthService{
+		UpdateAccountEmailFn: func(_ context.Context, _ uuid.UUID, _, _ string) (*model.User, error) {
+			return nil, fmt.Errorf("invalid current password")
+		},
+	}
+
+	h := handler.NewAuthHandler(mock)
+	req := httptest.NewRequest(http.MethodPatch, "/auth/account/email", bytes.NewBufferString(`{"currentPassword":"wrong","newEmail":"new@example.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req = injectUserID(req, uuid.New())
+
+	w := httptest.NewRecorder()
+	h.UpdateAccountEmail(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", w.Code)
+	}
+}
+
+// ── PATCH /auth/account/password ────────────────────────────
+
+func TestUpdateAccountPassword_Success(t *testing.T) {
+	userID := uuid.New()
+
+	mock := &MockAuthService{
+		UpdateAccountPasswordFn: func(_ context.Context, gotUserID uuid.UUID, currentPassword, newPassword string) error {
+			if gotUserID != userID {
+				t.Fatalf("expected userID %s, got %s", userID, gotUserID)
+			}
+			if currentPassword != "password123" {
+				t.Fatalf("expected currentPassword password123, got %s", currentPassword)
+			}
+			if newPassword != "newPassword123" {
+				t.Fatalf("expected newPassword newPassword123, got %s", newPassword)
+			}
+
+			return nil
+		},
+	}
+
+	h := handler.NewAuthHandler(mock)
+	req := httptest.NewRequest(http.MethodPatch, "/auth/account/password", bytes.NewBufferString(`{"currentPassword":"password123","newPassword":"newPassword123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.UpdateAccountPassword(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestUpdateAccountPassword_InvalidCurrentPassword(t *testing.T) {
+	mock := &MockAuthService{
+		UpdateAccountPasswordFn: func(_ context.Context, _ uuid.UUID, _, _ string) error {
+			return fmt.Errorf("invalid current password")
+		},
+	}
+
+	h := handler.NewAuthHandler(mock)
+	req := httptest.NewRequest(http.MethodPatch, "/auth/account/password", bytes.NewBufferString(`{"currentPassword":"wrong","newPassword":"newPassword123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req = injectUserID(req, uuid.New())
+
+	w := httptest.NewRecorder()
+	h.UpdateAccountPassword(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", w.Code)
+	}
+}
+
+func TestUpdateAccountPassword_Validation(t *testing.T) {
+	mock := &MockAuthService{}
+	h := handler.NewAuthHandler(mock)
+
+	req := httptest.NewRequest(http.MethodPatch, "/auth/account/password", bytes.NewBufferString(`{"currentPassword":"123","newPassword":"abc"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req = injectUserID(req, uuid.New())
+
+	w := httptest.NewRecorder()
+	h.UpdateAccountPassword(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", w.Code)
+	}
+}

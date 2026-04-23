@@ -40,8 +40,6 @@ function collectPageIds(nodes: PageNode[]): Set<string> {
 interface BlockNoteEditorProps {
   pageId: string;
   initialContent: string; // JSON-stringified Block[]
-  titleForSync?: string;
-  onFirstHeadingChange?: (title: string) => void;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
@@ -61,14 +59,10 @@ function toAbsoluteAssetURL(pathOrURL: string): string {
 export default function BlockNoteEditor({
   pageId,
   initialContent,
-  titleForSync,
-  onFirstHeadingChange,
 }: BlockNoteEditorProps) {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
   const themeMode = useThemeStore((state) => state.mode);
-  const isApplyingTitleToHeading = useRef(false);
-  const lastHeadingTitleSent = useRef<string>("Untitled");
 
   // Track page-block pageIds so we can detect removals in onChange
   const knownPageBlockIds = useRef<Set<string>>(new Set());
@@ -90,49 +84,6 @@ export default function BlockNoteEditor({
     schema,
     initialContent: parsedContent,
   });
-
-  const normalizeTitle = useCallback((value: string): string => {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : "Untitled";
-  }, []);
-
-  const extractInlineText = useCallback((inlineContent: unknown): string => {
-    if (typeof inlineContent === "string") {
-      return inlineContent;
-    }
-
-    if (!Array.isArray(inlineContent)) {
-      return "";
-    }
-
-    const collectText = (node: unknown): string => {
-      if (!node || typeof node !== "object") {
-        return "";
-      }
-
-      const candidate = node as {
-        type?: string;
-        text?: string;
-        content?: unknown;
-      };
-
-      if (candidate.type === "text" && typeof candidate.text === "string") {
-        return candidate.text;
-      }
-
-      if (candidate.type === "link" && Array.isArray(candidate.content)) {
-        return candidate.content.map(collectText).join("");
-      }
-
-      return "";
-    };
-
-    return inlineContent.map(collectText).join("");
-  }, []);
-
-  const getFirstHeadingBlock = useCallback(() => {
-    return editor.document.find((block) => block.type === "heading");
-  }, [editor]);
 
   // Auto-save: debounced PATCH to /pages/:pageId
   const saveContent = useCallback(
@@ -170,36 +121,6 @@ export default function BlockNoteEditor({
     }
     knownPageBlockIds.current = next;
   }, [pageId, parsedContent]);
-
-  useEffect(() => {
-    if (!titleForSync) return;
-
-    const firstHeading = getFirstHeadingBlock();
-    if (!firstHeading) return;
-
-    const normalizedTargetTitle = normalizeTitle(titleForSync);
-    const currentHeadingTitle = normalizeTitle(
-      extractInlineText(firstHeading.content),
-    );
-
-    if (normalizedTargetTitle === currentHeadingTitle) {
-      return;
-    }
-
-    isApplyingTitleToHeading.current = true;
-    editor.updateBlock(firstHeading, { content: normalizedTargetTitle });
-    lastHeadingTitleSent.current = normalizedTargetTitle;
-
-    queueMicrotask(() => {
-      isApplyingTitleToHeading.current = false;
-    });
-  }, [
-    titleForSync,
-    editor,
-    extractInlineText,
-    getFirstHeadingBlock,
-    normalizeTitle,
-  ]);
 
   const pickFile = useCallback((accept: string) => {
     return new Promise<File | null>((resolve) => {
@@ -450,21 +371,6 @@ export default function BlockNoteEditor({
         editor={editor}
         onChange={() => {
           const blocks = editor.document;
-
-          const firstHeading = getFirstHeadingBlock();
-          if (firstHeading && onFirstHeadingChange) {
-            const headingTitle = normalizeTitle(
-              extractInlineText(firstHeading.content),
-            );
-
-            if (headingTitle !== lastHeadingTitleSent.current) {
-              lastHeadingTitleSent.current = headingTitle;
-
-              if (!isApplyingTitleToHeading.current) {
-                onFirstHeadingChange(headingTitle);
-              }
-            }
-          }
 
           handleRemovedPageBlocks(blocks);
           saveContent(blocks);

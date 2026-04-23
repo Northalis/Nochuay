@@ -56,6 +56,8 @@ func main() {
 	// Auth routes (public)
 	mux.HandleFunc("POST /auth/signup", authHandler.Signup)
 	mux.HandleFunc("POST /auth/login", authHandler.Login)
+	mux.Handle("PATCH /auth/account/email", authMiddleware(http.HandlerFunc(authHandler.UpdateAccountEmail)))
+	mux.Handle("PATCH /auth/account/password", authMiddleware(http.HandlerFunc(authHandler.UpdateAccountPassword)))
 
 	// Page routes (protected)
 	mux.Handle("GET /pages/sidebar", authMiddleware(http.HandlerFunc(pageHandler.GetSidebar)))

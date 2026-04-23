@@ -11,9 +11,11 @@ import (
 // ── Mock AuthService ────────────────────────────────────────
 
 type MockAuthService struct {
-	SignupFn        func(ctx context.Context, email, password string) (string, *model.User, error)
-	LoginFn         func(ctx context.Context, email, password string) (string, *model.User, error)
-	ValidateTokenFn func(tokenString string) (uuid.UUID, error)
+	SignupFn                func(ctx context.Context, email, password string) (string, *model.User, error)
+	LoginFn                 func(ctx context.Context, email, password string) (string, *model.User, error)
+	UpdateAccountEmailFn    func(ctx context.Context, userID uuid.UUID, currentPassword, newEmail string) (*model.User, error)
+	UpdateAccountPasswordFn func(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
+	ValidateTokenFn         func(tokenString string) (uuid.UUID, error)
 }
 
 func (m *MockAuthService) Signup(ctx context.Context, email, password string) (string, *model.User, error) {
@@ -22,6 +24,14 @@ func (m *MockAuthService) Signup(ctx context.Context, email, password string) (s
 
 func (m *MockAuthService) Login(ctx context.Context, email, password string) (string, *model.User, error) {
 	return m.LoginFn(ctx, email, password)
+}
+
+func (m *MockAuthService) UpdateAccountEmail(ctx context.Context, userID uuid.UUID, currentPassword, newEmail string) (*model.User, error) {
+	return m.UpdateAccountEmailFn(ctx, userID, currentPassword, newEmail)
+}
+
+func (m *MockAuthService) UpdateAccountPassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
+	return m.UpdateAccountPasswordFn(ctx, userID, currentPassword, newPassword)
 }
 
 func (m *MockAuthService) ValidateToken(tokenString string) (uuid.UUID, error) {
