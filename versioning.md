@@ -1,46 +1,38 @@
 # Versioning
 
-## 2026-04-23
+## 2026-04-28
 
 ### v1.3.0 UI Refinement + Account/Search Support
 
-- Phase 1: Auth UI polish
-  - Added reusable auth brand/header treatment on login and register pages.
-  - Refined form card/input/button visuals for friendlier rounded interactions with clearer hover/focus states.
-  - Confirmed responsive behavior and light/dark consistency.
-- Phase 2: Document page seamlessness + title UX
-  - Smoothed document top layout so breadcrumb/title section feels continuous.
-  - Upgraded page title to inline editable control with debounce + blur commit behavior.
-  - Removed title/Editor Heading 1 synchronization so page title updates only page metadata.
-  - Increased page title visual scale to match/slightly exceed heading emphasis.
-- Phase 3: Sidebar Search
-  - Added protected backend endpoint `GET /pages/search?q=...` (user-scoped, title-based).
-  - Added search ordering preference for prefix matches first, then title A-Z.
-  - Added frontend debounced Search modal with loading, empty, error, and click-to-navigate states.
-  - Fixed runtime SQL escape issue that caused early-query failures.
-- Phase 4: Sidebar Settings modal + account management
-  - Added protected account endpoints:
+- Auth UI polish:
+  - Added reusable auth header with centered Nochuay text logo
+  - Refined login/register form styling for friendlier focus/hover states
+  - Preserved light/dark consistency and mobile layout
+- Document page improvements:
+  - Breadcrumb and title now feel seamless (no hard visual split)
+  - Inline editable page title with debounced save + blur commit
+  - Title changes no longer sync to the editor heading; Heading 1 is user-owned
+  - Page title typography enlarged to match or slightly exceed Heading 1
+- Sidebar Search:
+  - Backend search endpoint `GET /pages/search?q=...` (user-scoped, case-insensitive)
+  - Prefix-first, then A-Z title ordering
+  - Frontend search modal with debounced live results and navigation
+- Settings modal + account management:
+  - Settings modal with Account + Preference categories
+  - Protected account endpoints:
     - `PATCH /auth/account/email`
     - `PATCH /auth/account/password`
-  - Implemented backend repository/service/handler flow with password verification and conflict/error handling.
-  - Added frontend account API helpers + mutation hooks.
-  - Added Settings modal with `Account` and `Preference` sections.
-  - Moved theme control from profile dropdown into Settings > Preference.
-  - Synced updated email into auth user store on successful email change.
-- Phase 5: Tests and verification hardening
-  - Added backend service tests for search validation/pass-through/default limit/error wrapping.
-  - Added backend handler tests for search/account endpoint paths.
-  - Added backend auth account service tests for email/password update logic.
-  - Added frontend tests for account API wrappers and user store email synchronization.
-  - Validation run:
-    - `go test -v ./...` (backend)
-    - `go vet ./...` (backend)
-    - `npx jest --roots ./test/frontend --verbose` (frontend)
-    - targeted `npx eslint <changed files>` (frontend)
+  - Frontend account mutations with immediate email sync in store
+  - Theme control moved from profile menu to Settings > Preference
+- Tests and validation updates:
+  - Added backend service + handler coverage for account updates
+  - Added frontend tests for account API and user email update
+  - Targeted lint and Jest runs validated
+- UI version label updated to `Nochuay v1.3.0`
 
 ### Purpose
 
-- Deliver v1.3.0 as a UI-forward release with stable search and account settings flows while preserving existing architecture and query/store patterns.
+- Deliver a polished v1.3.0 UI release with search, settings, and account management, while keeping the editor heading independent from the page title.
 
 ## 2026-04-15
 
