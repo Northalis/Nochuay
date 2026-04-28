@@ -388,6 +388,96 @@ func TestDeletePage_Unauthorized(t *testing.T) {
 	}
 }
 
+// ── GET /pages/trash (GetTrash) ─────────────────────────
+
+func TestGetTrash_Success(t *testing.T) {
+	userID := uuid.New()
+
+	mock := &MockPageService{
+		GetTrashFn: func(_ context.Context, uid uuid.UUID) ([]model.PageTrashItem, error) {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			return []model.PageTrashItem{
+				{ID: uuid.New(), Title: "Trashed", DeletedAt: time.Now()},
+			}, nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/pages/trash", nil)
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.GetTrash(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+// ── PATCH /pages/{id}/restore (RestorePage) ─────────────
+
+func TestRestorePage_Success(t *testing.T) {
+	userID := uuid.New()
+	pageID := uuid.New()
+
+	mock := &MockPageService{
+		RestorePageFn: func(_ context.Context, uid, pid uuid.UUID) error {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			if pid != pageID {
+				t.Fatalf("expected pageID %s, got %s", pageID, pid)
+			}
+			return nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodPatch, "/pages/"+pageID.String()+"/restore", nil)
+	req.SetPathValue("id", pageID.String())
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.RestorePage(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+// ── DELETE /pages/{id}/permanent (DeletePagePermanently) ──
+
+func TestDeletePagePermanently_Success(t *testing.T) {
+	userID := uuid.New()
+	pageID := uuid.New()
+
+	mock := &MockPageService{
+		DeletePermanentFn: func(_ context.Context, uid, pid uuid.UUID) error {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			if pid != pageID {
+				t.Fatalf("expected pageID %s, got %s", pageID, pid)
+			}
+			return nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodDelete, "/pages/"+pageID.String()+"/permanent", nil)
+	req.SetPathValue("id", pageID.String())
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.DeletePagePermanently(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
 // ── GET /pages/sidebar (GetSidebar) ─────────────────────────
 
 func TestGetSidebar_Success(t *testing.T) {

@@ -58,6 +58,20 @@ describe("pageKeys", () => {
     ]);
   });
 
+  test("trash key is scoped by user", () => {
+    expect(pageKeys.trash.byUser("user-a")).toEqual([
+      "pages",
+      "trash",
+      "user-a",
+    ]);
+
+    expect(pageKeys.trash.byUser("user-b")).toEqual([
+      "pages",
+      "trash",
+      "user-b",
+    ]);
+  });
+
   test("anonymous fallback is stable when user id is absent", () => {
     expect(pageKeys.sidebar.byUser(null)).toEqual([
       "pages",
@@ -77,6 +91,12 @@ describe("pageKeys", () => {
       "search",
       "anonymous",
       "roadmap",
+    ]);
+
+    expect(pageKeys.trash.byUser(null)).toEqual([
+      "pages",
+      "trash",
+      "anonymous",
     ]);
   });
 });

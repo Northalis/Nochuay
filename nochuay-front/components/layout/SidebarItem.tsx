@@ -197,7 +197,7 @@ export default function SidebarItem({ node }: SidebarItemProps) {
                     className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <Trash2 size={14} />
-                    Delete
+                    Move to Trash
                   </button>
                 </div>
               )}

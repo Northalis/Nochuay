@@ -45,7 +45,10 @@ type MockPageService struct {
 	GetPageFn        func(ctx context.Context, userID, pageID uuid.UUID) (*model.Page, error)
 	UpdatePageFn     func(ctx context.Context, userID, pageID uuid.UUID, updates map[string]any) (*model.Page, error)
 	DeletePageFn     func(ctx context.Context, userID, pageID uuid.UUID) error
+	RestorePageFn    func(ctx context.Context, userID, pageID uuid.UUID) error
+	DeletePermanentFn func(ctx context.Context, userID, pageID uuid.UUID) error
 	GetSidebarTreeFn func(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error)
+	GetTrashFn       func(ctx context.Context, userID uuid.UUID) ([]model.PageTrashItem, error)
 	SearchPagesFn    func(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error)
 	SaveContentFn    func(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error)
 	GetContentFn     func(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error)
@@ -67,8 +70,20 @@ func (m *MockPageService) DeletePage(ctx context.Context, userID, pageID uuid.UU
 	return m.DeletePageFn(ctx, userID, pageID)
 }
 
+func (m *MockPageService) RestorePage(ctx context.Context, userID, pageID uuid.UUID) error {
+	return m.RestorePageFn(ctx, userID, pageID)
+}
+
+func (m *MockPageService) DeletePagePermanently(ctx context.Context, userID, pageID uuid.UUID) error {
+	return m.DeletePermanentFn(ctx, userID, pageID)
+}
+
 func (m *MockPageService) GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error) {
 	return m.GetSidebarTreeFn(ctx, userID)
+}
+
+func (m *MockPageService) GetTrash(ctx context.Context, userID uuid.UUID) ([]model.PageTrashItem, error) {
+	return m.GetTrashFn(ctx, userID)
 }
 
 func (m *MockPageService) SearchPages(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error) {

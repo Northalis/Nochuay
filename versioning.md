@@ -2,6 +2,27 @@
 
 ## 2026-04-28
 
+### v2.0.0 Soft Delete / Recycle Bin Update
+
+- Soft delete data model:
+  - Added `deleted_at` column for pages (nullable)
+  - Active page queries now filter out trashed pages
+- New Trash endpoints:
+  - `GET /pages/trash` (list trashed pages)
+  - `PATCH /pages/{id}/restore` (restore subtree)
+  - `DELETE /pages/{id}/permanent` (permanent delete subtree)
+- Delete behavior change:
+  - `DELETE /pages/{id}` now moves pages to Trash (subtree soft delete)
+  - Permanent delete now only happens via `/permanent`
+- Frontend Trash UI:
+  - Sidebar Trash modal with filterable list
+  - Restore and Delete forever actions
+  - Sidebar action renamed to "Move to Trash"
+
+### Purpose
+
+- Promote safer deletion with a Trash workflow while preserving the recursive page tree.
+
 ### v1.3.0 UI Refinement + Account/Search Support
 
 - Auth UI polish:
