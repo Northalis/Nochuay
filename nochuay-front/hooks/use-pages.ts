@@ -2,9 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchSidebarTree,
   searchPages,
+  fetchTrashPages,
   createPage,
   updatePage,
   deletePage,
+  restorePage,
+  deletePagePermanently,
 } from "@/lib/page-api";
 import { useUserStore } from "@/store/use-user-store";
 
@@ -23,6 +26,11 @@ export const pageKeys = {
     all: ["pages", "search"] as const,
     byUser: (userID: string | null, query: string) =>
       ["pages", "search", userID ?? "anonymous", query] as const,
+  },
+  trash: {
+    all: ["pages", "trash"] as const,
+    byUser: (userID: string | null) =>
+      ["pages", "trash", userID ?? "anonymous"] as const,
   },
 };
 
@@ -46,6 +54,17 @@ export function usePageSearch(rawQuery: string, enabled = true) {
     queryKey: pageKeys.search.byUser(userID, query.toLowerCase()),
     queryFn: () => searchPages(query),
     enabled: enabled && !!userID && query.length > 0,
+  });
+}
+
+/* ── Trash list query ───────────────────────────────────────── */
+export function useTrashPages(enabled = true) {
+  const userID = useUserStore((state) => state.user?.id ?? null);
+
+  return useQuery({
+    queryKey: pageKeys.trash.byUser(userID),
+    queryFn: fetchTrashPages,
+    enabled: enabled && !!userID,
   });
 }
 
@@ -97,6 +116,35 @@ export function useDeletePage() {
       qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
       qc.invalidateQueries({ queryKey: pageKeys.search.all });
       qc.invalidateQueries({ queryKey: pageKeys.detailPrefix });
+      qc.invalidateQueries({ queryKey: pageKeys.trash.all });
+    },
+  });
+}
+
+/* ── Restore page mutation ─────────────────────────────────── */
+export function useRestorePage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => restorePage(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+      qc.invalidateQueries({ queryKey: pageKeys.search.all });
+      qc.invalidateQueries({ queryKey: pageKeys.detailPrefix });
+      qc.invalidateQueries({ queryKey: pageKeys.trash.all });
+    },
+  });
+}
+
+/* ── Permanent delete mutation ─────────────────────────────── */
+export function useDeletePagePermanently() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deletePagePermanently(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+      qc.invalidateQueries({ queryKey: pageKeys.search.all });
+      qc.invalidateQueries({ queryKey: pageKeys.detailPrefix });
+      qc.invalidateQueries({ queryKey: pageKeys.trash.all });
     },
   });
 }

@@ -7,6 +7,7 @@ export interface Page {
   coverImage?: string;
   content: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 
 export interface PageNode extends Page {
@@ -26,4 +27,12 @@ export interface PageSearchResult {
   parentId: string | null;
   title: string;
   icon?: string;
+}
+
+export interface PageTrashItem {
+  id: string;
+  parentId: string | null;
+  title: string;
+  icon?: string;
+  deletedAt: string;
 }

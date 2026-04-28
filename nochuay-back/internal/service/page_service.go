@@ -17,7 +17,10 @@ type PageService interface {
 	GetPage(ctx context.Context, userID, pageID uuid.UUID) (*model.Page, error)
 	UpdatePage(ctx context.Context, userID, pageID uuid.UUID, updates map[string]any) (*model.Page, error)
 	DeletePage(ctx context.Context, userID, pageID uuid.UUID) error
+	RestorePage(ctx context.Context, userID, pageID uuid.UUID) error
+	DeletePagePermanently(ctx context.Context, userID, pageID uuid.UUID) error
 	GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]model.PageNode, error)
+	GetTrash(ctx context.Context, userID uuid.UUID) ([]model.PageTrashItem, error)
 	SearchPages(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error)
 	SaveContent(ctx context.Context, userID, pageID uuid.UUID, content json.RawMessage) (*model.Page, error)
 	GetContent(ctx context.Context, userID, pageID uuid.UUID) (json.RawMessage, error)
@@ -110,8 +113,38 @@ func (s *pageService) DeletePage(ctx context.Context, userID, pageID uuid.UUID) 
 		return fmt.Errorf("page not found")
 	}
 
-	if err := s.pageRepo.DeletePage(ctx, userID, pageID); err != nil {
+	if err := s.pageRepo.SoftDeletePageSubtree(ctx, userID, pageID); err != nil {
 		return fmt.Errorf("failed to delete page: %w", err)
+	}
+	return nil
+}
+
+func (s *pageService) RestorePage(ctx context.Context, userID, pageID uuid.UUID) error {
+	existing, err := s.pageRepo.GetTrashedPageByID(ctx, userID, pageID)
+	if err != nil {
+		return fmt.Errorf("failed to verify trashed page: %w", err)
+	}
+	if existing == nil {
+		return fmt.Errorf("page not found")
+	}
+
+	if err := s.pageRepo.RestorePageSubtree(ctx, userID, pageID); err != nil {
+		return fmt.Errorf("failed to restore page: %w", err)
+	}
+	return nil
+}
+
+func (s *pageService) DeletePagePermanently(ctx context.Context, userID, pageID uuid.UUID) error {
+	existing, err := s.pageRepo.GetTrashedPageByID(ctx, userID, pageID)
+	if err != nil {
+		return fmt.Errorf("failed to verify trashed page: %w", err)
+	}
+	if existing == nil {
+		return fmt.Errorf("page not found")
+	}
+
+	if err := s.pageRepo.DeletePagePermanently(ctx, userID, pageID); err != nil {
+		return fmt.Errorf("failed to permanently delete page: %w", err)
 	}
 	return nil
 }
@@ -158,6 +191,14 @@ func (s *pageService) GetSidebarTree(ctx context.Context, userID uuid.UUID) ([]m
 		return nil, fmt.Errorf("failed to get pages: %w", err)
 	}
 	return BuildTree(pages), nil
+}
+
+func (s *pageService) GetTrash(ctx context.Context, userID uuid.UUID) ([]model.PageTrashItem, error) {
+	items, err := s.pageRepo.GetTrashedPages(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trash: %w", err)
+	}
+	return items, nil
 }
 
 func (s *pageService) SearchPages(ctx context.Context, userID uuid.UUID, query string, limit int) ([]model.PageSearchResult, error) {

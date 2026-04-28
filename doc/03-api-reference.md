@@ -449,7 +449,7 @@ curl -X PATCH http://localhost:8080/pages/page-uuid \
 
 #### `DELETE /pages/{id}`
 
-Delete a page and all its descendant pages (via CASCADE).
+Move a page and all its descendant pages to Trash (soft delete). This sets `deleted_at` and hides the page from all active GET endpoints.
 
 **Request:**
 
@@ -474,6 +474,102 @@ curl -X DELETE http://localhost:8080/pages/page-uuid \
 | 400    | `invalid page id format` | Invalid UUID             |
 | 401    | `unauthorized`           | Missing or invalid token |
 | 404    | `page not found`         | Page doesn't exist       |
+
+---
+
+#### `GET /pages/trash`
+
+Fetch all trashed pages for the authenticated user.
+
+**Request:**
+
+```bash
+curl http://localhost:8080/pages/trash \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "data": [
+    {
+      "id": "page-uuid",
+      "parentId": "parent-uuid",
+      "title": "Archived page",
+      "icon": "🗂️",
+      "deletedAt": "2026-04-28T10:30:00Z"
+    }
+  ],
+  "error": null
+}
+```
+
+**Error Responses:**
+
+| Status | Error Message  | Cause                    |
+| ------ | -------------- | ------------------------ |
+| 401    | `unauthorized` | Missing or invalid token |
+
+---
+
+#### `PATCH /pages/{id}/restore`
+
+Restore a trashed page and its descendant pages back to the active tree.
+
+**Request:**
+
+```bash
+curl -X PATCH http://localhost:8080/pages/page-uuid/restore \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "data": { "success": true },
+  "error": null
+}
+```
+
+**Error Responses:**
+
+| Status | Error Message            | Cause                    |
+| ------ | ------------------------ | ------------------------ |
+| 400    | `invalid page id format` | Invalid UUID             |
+| 401    | `unauthorized`           | Missing or invalid token |
+| 404    | `page not found`         | Page is not in the trash |
+
+---
+
+#### `DELETE /pages/{id}/permanent`
+
+Permanently delete a trashed page and all descendants. This action is irreversible.
+
+**Request:**
+
+```bash
+curl -X DELETE http://localhost:8080/pages/page-uuid/permanent \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "data": { "success": true },
+  "error": null
+}
+```
+
+**Error Responses:**
+
+| Status | Error Message            | Cause                    |
+| ------ | ------------------------ | ------------------------ |
+| 400    | `invalid page id format` | Invalid UUID             |
+| 401    | `unauthorized`           | Missing or invalid token |
+| 404    | `page not found`         | Page is not in the trash |
 
 ---
 

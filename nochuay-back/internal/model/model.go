@@ -42,6 +42,7 @@ type Page struct {
 	IsPublished bool            `json:"isPublished"`
 	CreatedAt   time.Time       `json:"createdAt"`
 	UpdatedAt   time.Time       `json:"updatedAt"`
+	DeletedAt   *time.Time      `json:"deletedAt,omitempty"`
 }
 
 // PageNode is the recursive tree structure used for the sidebar.
@@ -57,4 +58,13 @@ type PageSearchResult struct {
 	ParentID *uuid.UUID `json:"parentId"`
 	Title    string     `json:"title"`
 	Icon     *string    `json:"icon,omitempty"`
+}
+
+// PageTrashItem is a lightweight projection used by the trash listing.
+type PageTrashItem struct {
+	ID        uuid.UUID  `json:"id"`
+	ParentID  *uuid.UUID `json:"parentId"`
+	Title     string     `json:"title"`
+	Icon      *string    `json:"icon,omitempty"`
+	DeletedAt time.Time  `json:"deletedAt"`
 }

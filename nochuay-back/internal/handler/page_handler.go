@@ -306,6 +306,23 @@ func (h *PageHandler) SearchPages(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, results)
 }
 
+// GetTrash handles GET /pages/trash.
+func (h *PageHandler) GetTrash(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	items, err := h.pageService.GetTrash(r.Context(), userID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "failed to load trash")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, items)
+}
+
 // DeletePage handles DELETE /pages/{id}.
 func (h *PageHandler) DeletePage(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
@@ -326,6 +343,58 @@ func (h *PageHandler) DeletePage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		response.Error(w, http.StatusInternalServerError, "failed to delete page")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
+// RestorePage handles PATCH /pages/{id}/restore.
+func (h *PageHandler) RestorePage(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	pageID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid page id format")
+		return
+	}
+
+	if err := h.pageService.RestorePage(r.Context(), userID, pageID); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			response.Error(w, http.StatusNotFound, "page not found")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to restore page")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
+// DeletePagePermanently handles DELETE /pages/{id}/permanent.
+func (h *PageHandler) DeletePagePermanently(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	pageID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid page id format")
+		return
+	}
+
+	if err := h.pageService.DeletePagePermanently(r.Context(), userID, pageID); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			response.Error(w, http.StatusNotFound, "page not found")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to delete page permanently")
 		return
 	}
 
