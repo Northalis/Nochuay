@@ -333,6 +333,7 @@ Before committing changes:
 | `DB_USER`               | No       | `postgres`              | Database user       |
 | `DB_PASSWORD`           | Yes      | —                       | Database password   |
 | `DB_NAME`               | No       | `nochuay_db`            | Database name       |
+| `DB_SSLMODE`            | No       | `disable`               | PostgreSQL SSL mode |
 | `JWT_SECRET`            | Yes      | —                       | JWT signing key     |
 | `CORS_ALLOWED_ORIGINS`  | No       | `http://localhost:3000` | Allowed CORS origin |
 | `UPLOAD_DIR`            | No       | `uploads`               | File upload root    |

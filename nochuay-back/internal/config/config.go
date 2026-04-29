@@ -14,6 +14,7 @@ type Config struct {
 	DBUser             string
 	DBPassword         string
 	DBName             string
+	DBSSLMode          string
 	JWTSecret          string
 	CORSAllowedOrigins string
 	UploadDir          string
@@ -29,6 +30,7 @@ func Load() (*Config, error) {
 		DBUser:             getEnv("DB_USER", "postgres"),
 		DBPassword:         getEnv("DB_PASSWORD", ""),
 		DBName:             getEnv("DB_NAME", "nochuay_db"),
+		DBSSLMode:          getEnv("DB_SSLMODE", "disable"),
 		JWTSecret:          getEnv("JWT_SECRET", ""),
 		CORSAllowedOrigins: getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000"),
 		UploadDir:          getEnv("UPLOAD_DIR", "uploads"),
@@ -48,8 +50,8 @@ func Load() (*Config, error) {
 // DSN returns the PostgreSQL connection string.
 func (c *Config) DSN() string {
 	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName,
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName, c.DBSSLMode,
 	)
 }
 
