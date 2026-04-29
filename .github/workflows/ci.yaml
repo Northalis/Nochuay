@@ -52,7 +52,7 @@ jobs:
   # Job 2: Frontend (Next.js)
   # ============================
   frontend:
-    name: Frontend Check
+    name: Frontend Lint & Test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -75,8 +75,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build
-        run: npm run build
+      - name: Test
+        run: npx jest --roots ./test/frontend --verbose
 
   # ============================
   # Job 3: Docker Build

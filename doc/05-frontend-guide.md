@@ -41,7 +41,8 @@ nochuay-front/
 │   │   ├── editor-schema.ts     # Custom block schema
 │   │   └── page-block.tsx       # Custom "page" block type
 │   ├── layout/                   # Navigation components
-│   │   ├── Sidebar.tsx           # Sidebar panel
+│   │   ├── BreadcrumbNavigator.tsx # Breadcrumb navigation
+│   │   ├── Sidebar.tsx           # Sidebar panel + modals
 │   │   └── SidebarItem.tsx       # Recursive page tree item
 │   ├── providers/                # Context providers
 │   │   ├── auth-guard.tsx        # Auth protection wrapper
@@ -53,9 +54,12 @@ nochuay-front/
 │       ├── input.tsx
 │       └── label.tsx
 ├── hooks/
+│   ├── use-account.ts            # Account mutation hooks
 │   └── use-pages.ts              # TanStack Query hooks for pages API
 ├── lib/
 │   ├── api.ts                    # Generic fetch wrapper (apiFetch)
+│   ├── auth-api.ts               # Account API helper functions
+│   ├── breadcrumb.ts             # Breadcrumb path builder
 │   ├── page-api.ts               # Page-specific API functions
 │   ├── types.ts                  # TypeScript interfaces
 │   └── utils.ts                  # Utility functions (cn)
@@ -98,13 +102,14 @@ Next.js route groups (parenthesized folders) organize pages without affecting UR
 
 Manages authentication state with localStorage persistence.
 
-| Property    | Type             | Description                                 |
-| ----------- | ---------------- | ------------------------------------------- |
-| `token`     | `string \| null` | JWT token                                   |
-| `user`      | `User \| null`   | User object `{ id, email }`                 |
-| `setAuth()` | function         | Stores token + user in state + localStorage |
-| `logout()`  | function         | Clears state + localStorage                 |
-| `hydrate()` | function         | Restores state from localStorage on mount   |
+| Property        | Type             | Description                                 |
+| --------------- | ---------------- | ------------------------------------------- |
+| `token`         | `string \| null` | JWT token                                   |
+| `user`          | `User \| null`   | User object `{ id, email }`                 |
+| `setAuth()`     | function         | Stores token + user in state + localStorage |
+| `updateEmail()` | function         | Updates email in state + localStorage       |
+| `logout()`      | function         | Clears state + localStorage                 |
+| `hydrate()`     | function         | Restores state from localStorage on mount   |
 
 **Usage:**
 
@@ -131,18 +136,42 @@ Manages sidebar UI state (expand/collapse, inline rename).
 | `renamingId`      | `string \| null` | ID of page currently being renamed |
 | `setRenamingId()` | function         | Set/clear rename mode              |
 
+#### `useThemeStore` (`store/use-theme-store.ts`)
+
+Manages light/dark preference with localStorage persistence.
+
+| Property       | Type                | Description                   |
+| -------------- | ------------------- | ----------------------------- |
+| `mode`         | `"light" \| "dark"` | Current theme mode            |
+| `setMode()`    | function            | Set a specific theme mode     |
+| `toggleMode()` | function            | Toggle between light and dark |
+| `hydrate()`    | function            | Restores stored mode on mount |
+
 ### TanStack Query (Server State)
 
 Server data (page tree, page details) is managed through TanStack Query hooks in `hooks/use-pages.ts`.
 
-| Hook             | Type     | Query Key              | API Call             |
-| ---------------- | -------- | ---------------------- | -------------------- |
-| `useSidebarTree` | Query    | `["pages", "sidebar"]` | `GET /pages/sidebar` |
-| `useCreatePage`  | Mutation | —                      | `POST /pages`        |
-| `useUpdatePage`  | Mutation | —                      | `PATCH /pages/:id`   |
-| `useDeletePage`  | Mutation | —                      | `DELETE /pages/:id`  |
+| Hook                       | Type     | Query Key                               | API Call                      |
+| -------------------------- | -------- | --------------------------------------- | ----------------------------- |
+| `useSidebarTree`           | Query    | `pageKeys.sidebar.byUser(userID)`       | `GET /pages/sidebar`          |
+| `usePageSearch`            | Query    | `pageKeys.search.byUser(userID, query)` | `GET /pages/search?q=...`     |
+| `useTrashPages`            | Query    | `pageKeys.trash.byUser(userID)`         | `GET /pages/trash`            |
+| `useCreatePage`            | Mutation | —                                       | `POST /pages`                 |
+| `useUpdatePage`            | Mutation | —                                       | `PATCH /pages/:id`            |
+| `useDeletePage`            | Mutation | —                                       | `DELETE /pages/:id`           |
+| `useRestorePage`           | Mutation | —                                       | `PATCH /pages/:id/restore`    |
+| `useDeletePagePermanently` | Mutation | —                                       | `DELETE /pages/:id/permanent` |
 
-All mutations invalidate `["pages", "sidebar"]` on success to refresh the sidebar tree.
+All mutations invalidate `pageKeys.sidebar.all` plus related search/detail/trash keys to keep caches in sync.
+
+The document page fetches page details directly with `useQuery` and a user-scoped key:
+
+```typescript
+useQuery({
+  queryKey: pageKeys.detail(userID, id),
+  queryFn: () => getPage(id),
+});
+```
 
 **Query Configuration** (set in `query-provider.tsx`):
 
@@ -165,6 +194,9 @@ const data = await apiFetch<Page>("/pages/some-uuid");
 
 1. Reads `NEXT_PUBLIC_API_URL` environment variable for base URL
 2. Sets `Content-Type: application/json` header
+
+- Skips `Content-Type` when the body is `FormData` (browser sets boundary)
+
 3. Reads JWT token from `localStorage` and attaches `Authorization: Bearer` header
 4. Sends the request
 5. On success: parses JSON, extracts `data` field from the `{ data, error }` wrapper
@@ -174,14 +206,29 @@ const data = await apiFetch<Page>("/pages/some-uuid");
 
 Typed wrapper functions for page-related API calls:
 
-| Function               | Method | Endpoint            | Parameters                    |
-| ---------------------- | ------ | ------------------- | ----------------------------- |
-| `fetchSidebarTree()`   | GET    | `/pages/sidebar`    | None                          |
-| `createPage(body)`     | POST   | `/pages`            | `{ parentId?, title? }`       |
-| `getPage(id)`          | GET    | `/pages/:id`        | Page UUID                     |
-| `updatePage(id, body)` | PATCH  | `/pages/:id`        | `{ title?, icon?, content? }` |
-| `deletePage(id)`       | DELETE | `/pages/:id`        | Page UUID                     |
-| `uploadPageAsset()`    | POST   | `/pages/:id/assets` | `(id, kind, file)`            |
+| Function                    | Method | Endpoint               | Parameters                    |
+| --------------------------- | ------ | ---------------------- | ----------------------------- |
+| `fetchSidebarTree()`        | GET    | `/pages/sidebar`       | None                          |
+| `searchPages(query)`        | GET    | `/pages/search`        | `query: string`               |
+| `fetchTrashPages()`         | GET    | `/pages/trash`         | None                          |
+| `createPage(body)`          | POST   | `/pages`               | `{ parentId?, title? }`       |
+| `getPage(id)`               | GET    | `/pages/:id`           | Page UUID                     |
+| `updatePage(id, body)`      | PATCH  | `/pages/:id`           | `{ title?, icon?, content? }` |
+| `deletePage(id)`            | DELETE | `/pages/:id`           | Page UUID                     |
+| `restorePage(id)`           | PATCH  | `/pages/:id/restore`   | Page UUID                     |
+| `deletePagePermanently(id)` | DELETE | `/pages/:id/permanent` | Page UUID                     |
+| `uploadPageAsset()`         | POST   | `/pages/:id/assets`    | `(id, kind, file)`            |
+
+### Account API Functions (`lib/auth-api.ts`)
+
+Helpers for account update endpoints:
+
+| Function                  | Method | Endpoint                 | Parameters                         |
+| ------------------------- | ------ | ------------------------ | ---------------------------------- |
+| `updateAccountEmail()`    | PATCH  | `/auth/account/email`    | `{ currentPassword, newEmail }`    |
+| `updateAccountPassword()` | PATCH  | `/auth/account/password` | `{ currentPassword, newPassword }` |
+
+`hooks/use-account.ts` wraps these helpers and updates the stored email after a successful change.
 
 ---
 
@@ -195,13 +242,29 @@ interface Page {
   title: string;
   icon?: string;
   coverImage?: string;
-  content: string; // JSON-stringified BlockNote blocks
+  content: string; // JSON string or BlockNote JSON array (stringified on save)
   createdAt: string;
+  deletedAt?: string | null;
 }
 
 interface PageNode extends Page {
   children: PageNode[]; // Recursive children
   depth: number; // Indentation level (0 = root)
+}
+
+interface PageSearchResult {
+  id: string;
+  parentId: string | null;
+  title: string;
+  icon?: string;
+}
+
+interface PageTrashItem {
+  id: string;
+  parentId: string | null;
+  title: string;
+  icon?: string;
+  deletedAt: string;
 }
 ```
 
@@ -218,8 +281,11 @@ The main navigation panel displayed on the left side of the application.
 **Features:**
 
 - **Profile dropdown:** Shows user email and logout button
-- **Theme switch:** Light/dark toggle is available inside profile dropdown
-- **Action buttons:** Search (placeholder), Settings (placeholder), New Page
+- **Action buttons:** Search, Settings, Trash, New Page
+- **Search modal:** Debounced title search with keyboard focus and results navigation
+- **Trash modal:** Filterable list with restore and permanent delete actions
+- **Settings modal:** Account (email/password update) and Preference (theme) panels
+- **Theme switch:** Light/dark toggle in Settings > Preference
 - **Page tree:** Recursively renders `SidebarItem` components from sidebar tree data
 - **Loading/error states:** Shows spinner while loading, error message on failure
 - **Empty state:** Shows "No pages yet" when user has no pages
@@ -238,11 +304,36 @@ Recursive component rendering a single page node in the sidebar tree.
 - **Expand/collapse:** Chevron toggle for pages with children (depth-based indentation)
 - **Inline rename:** Double-entry via context menu → input field replaces title
 - **Add sub-page:** Creates a child page under the current node
-- **Delete:** Removes the page (with navigation redirect if viewing deleted page)
+- **Delete:** Moves the page to Trash (redirects if viewing the deleted page)
 - **Context menu (three-dot):** Rename and Delete options
 - **Active state:** Highlighted when current URL matches
 
 **Indentation formula:** `paddingLeft = 12 + (node.depth × 12)` pixels.
+
+### BreadcrumbNavigator (`components/layout/BreadcrumbNavigator.tsx`)
+
+Renders a compact breadcrumb trail for nested pages.
+
+**Props:**
+
+| Prop            | Type                  | Description                                  |
+| --------------- | --------------------- | -------------------------------------------- | ------------------------------------------- |
+| `segments`      | `BreadcrumbSegment[]` | Ordered breadcrumb path from root to current |
+| `currentPageID` | string                | Current page identifier                      |
+| `onNavigate`    | `(pageID: string      | null)`                                       | Called when a breadcrumb segment is clicked |
+
+Breadcrumb segments are generated by `buildBreadcrumbSegments()` in `lib/breadcrumb.ts`.
+
+### DocumentPage (`app/(main)/documents/[id]/page.tsx`)
+
+Renders the page editor view with breadcrumb navigation and an editable title field.
+
+**Highlights:**
+
+- Fetches page data with `useQuery` and `pageKeys.detail(userID, id)`
+- Renders breadcrumb navigation via `BreadcrumbNavigator`
+- Title input debounces updates and commits on blur
+- Editor content loads from `page.content` (string or JSON array)
 
 ### BlockNoteEditor (`components/editor/BlockNoteEditor.tsx`)
 
@@ -262,7 +353,6 @@ The rich text editor wrapper component. Dynamically imported (no SSR) to avoid B
 - **Direct uploads via slash menu:** `/image` and `/file` now open local file picker and upload to backend, then insert returned URL
 - **Slash menu:** Adds a "Page" command that creates a child page and inserts a page block
 - **Page block cleanup:** Automatically detects and removes page blocks whose referenced pages have been deleted
-- **Page block deletion:** When a page block is removed from the editor, the corresponding child page is deleted from the backend
 
 ### PageBlock (`components/editor/page-block.tsx`)
 
@@ -316,10 +406,12 @@ Renders nothing until hydration completes, preventing flash of protected content
 6. All API calls include: Authorization: Bearer <token>
        │
 7. On logout:
-   ├── useUserStore.logout()
-   │   ├── localStorage.removeItem("token")
-   │   └── localStorage.removeItem("user")
-   └── router.push("/login")
+  ├── queryClient.clear()
+  ├── useSidebarStore.reset()
+  ├── useUserStore.logout()
+  │   ├── localStorage.removeItem("token")
+  │   └── localStorage.removeItem("user")
+  └── router.push("/login")
 ```
 
 ---
@@ -357,7 +449,7 @@ The application supports light and dark modes via CSS custom properties defined 
 Runtime behavior is handled by `useThemeStore` and `ThemeProvider`:
 
 - Default mode is **light**
-- Users toggle mode from the sidebar profile menu
+- Users toggle mode from Settings > Preference
 - Preference persists in `localStorage`
 - Root layout applies the stored mode before hydration to prevent flicker
 
@@ -413,10 +505,13 @@ const saveContent = useCallback(
 
 ### Sidebar Query Invalidation
 
-All page mutations (create, update, delete) invalidate the sidebar query to keep the tree in sync:
+All page mutations refresh sidebar, search, detail, and trash caches:
 
 ```typescript
 onSuccess: () => {
-  queryClient.invalidateQueries({ queryKey: ["pages", "sidebar"] });
+  queryClient.invalidateQueries({ queryKey: pageKeys.sidebar.all });
+  queryClient.invalidateQueries({ queryKey: pageKeys.search.all });
+  queryClient.invalidateQueries({ queryKey: pageKeys.detailPrefix });
+  queryClient.invalidateQueries({ queryKey: pageKeys.trash.all });
 },
 ```

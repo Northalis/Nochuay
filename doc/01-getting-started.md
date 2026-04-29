@@ -42,6 +42,8 @@ DB_PASSWORD=secret
 DB_NAME=nochuay_db
 JWT_SECRET=change_this_to_something_secure
 CORS_ALLOWED_ORIGINS=http://localhost:3000
+UPLOAD_DIR=uploads
+MAX_UPLOAD_SIZE_BYTES=10485760
 ```
 
 ### Frontend (`nochuay-front/.env.local`)
