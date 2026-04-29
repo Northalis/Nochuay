@@ -9,12 +9,14 @@ export default function AuthBrandHeader({
 }: AuthBrandHeaderProps) {
   return (
     <div className="mb-5 text-center">
-      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">
-        Nochuay
-      </p>
-      <p className="mt-1 text-[11px] font-medium text-neutral-400 dark:text-neutral-500">
-        Temporary mark for v1.3.0
-      </p>
+      <div className="flex justify-center">
+        <img
+          src="/nochuay-high-resolution-logo-grayscale-transparent%20(1).png"
+          alt="Nochuay logo"
+          className="h-30 w-auto"
+          loading="lazy"
+        />
+      </div>
       <h1 className="mt-6 text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
         {title}
       </h1>
