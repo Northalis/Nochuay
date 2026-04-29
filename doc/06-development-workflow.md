@@ -6,18 +6,18 @@ This document covers day-to-day development practices, Docker setup, hot reloadi
 
 ## Quick Reference
 
-| Task                        | Command                                  |
-| --------------------------- | ---------------------------------------- |
-| Start all services          | `docker-compose up --build`              |
-| Start services (background) | `docker-compose up -d --build`           |
-| Stop all services           | `docker-compose down`                    |
-| Stop + remove data          | `docker-compose down -v`                 |
-| View logs                   | `docker-compose logs -f <service>`       |
-| Run backend tests           | `cd nochuay-back && go test -v ./...`    |
-| Run frontend tests          | `cd nochuay-front && npx jest --verbose` |
-| Run frontend linting        | `cd nochuay-front && npm run lint`       |
-| Run Go linting              | `cd nochuay-back && go vet ./...`        |
-| Rebuild a single service    | `docker-compose up --build <service>`    |
+| Task                        | Command                                                          |
+| --------------------------- | ---------------------------------------------------------------- |
+| Start all services          | `docker-compose up --build`                                      |
+| Start services (background) | `docker-compose up -d --build`                                   |
+| Stop all services           | `docker-compose down`                                            |
+| Stop + remove data          | `docker-compose down -v`                                         |
+| View logs                   | `docker-compose logs -f <service>`                               |
+| Run backend tests           | `cd nochuay-back && go test -v ./...`                            |
+| Run frontend tests          | `cd nochuay-front && npx jest --roots ./test/frontend --verbose` |
+| Run frontend linting        | `cd nochuay-front && npm run lint`                               |
+| Run Go linting              | `cd nochuay-back && go vet ./...`                                |
+| Rebuild a single service    | `docker-compose up --build <service>`                            |
 
 ---
 
@@ -314,7 +314,7 @@ npm run lint
 Before committing changes:
 
 1. Run backend tests: `cd nochuay-back && go test -v ./...`
-2. Run frontend tests: `cd nochuay-front && npx jest --verbose`
+2. Run frontend tests: `cd nochuay-front && npx jest --roots ./test/frontend --verbose`
 3. Run linting: `go vet ./...` and `npm run lint`
 4. Verify no secrets in committed files
 5. Test the feature manually via the UI
@@ -325,19 +325,22 @@ Before committing changes:
 
 ### Backend (`nochuay-back/.env`)
 
-| Variable               | Required | Default                 | Description         |
-| ---------------------- | -------- | ----------------------- | ------------------- |
-| `PORT`                 | No       | `8080`                  | API server port     |
-| `DB_HOST`              | No       | `localhost`             | PostgreSQL host     |
-| `DB_PORT`              | No       | `5432`                  | PostgreSQL port     |
-| `DB_USER`              | No       | `postgres`              | Database user       |
-| `DB_PASSWORD`          | Yes      | —                       | Database password   |
-| `DB_NAME`              | No       | `nochuay_db`            | Database name       |
-| `JWT_SECRET`           | Yes      | —                       | JWT signing key     |
-| `CORS_ALLOWED_ORIGINS` | No       | `http://localhost:3000` | Allowed CORS origin |
+| Variable                | Required | Default                 | Description         |
+| ----------------------- | -------- | ----------------------- | ------------------- |
+| `PORT`                  | No       | `8080`                  | API server port     |
+| `DB_HOST`               | No       | `localhost`             | PostgreSQL host     |
+| `DB_PORT`               | No       | `5432`                  | PostgreSQL port     |
+| `DB_USER`               | No       | `postgres`              | Database user       |
+| `DB_PASSWORD`           | Yes      | —                       | Database password   |
+| `DB_NAME`               | No       | `nochuay_db`            | Database name       |
+| `DB_SSLMODE`            | No       | `disable`               | PostgreSQL SSL mode |
+| `JWT_SECRET`            | Yes      | —                       | JWT signing key     |
+| `CORS_ALLOWED_ORIGINS`  | No       | `http://localhost:3000` | Allowed CORS origin |
+| `UPLOAD_DIR`            | No       | `uploads`               | File upload root    |
+| `MAX_UPLOAD_SIZE_BYTES` | No       | `10485760`              | Upload size limit   |
 
 ### Frontend (`nochuay-front/.env.local`)
 
-| Variable              | Required | Default                     | Description          |
-| --------------------- | -------- | --------------------------- | -------------------- |
-| `NEXT_PUBLIC_API_URL` | No       | `http://localhost:8080/api` | Backend API base URL |
+| Variable              | Required | Default                 | Description          |
+| --------------------- | -------- | ----------------------- | -------------------- |
+| `NEXT_PUBLIC_API_URL` | No       | `http://localhost:8080` | Backend API base URL |

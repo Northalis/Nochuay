@@ -13,10 +13,13 @@ import { apiFetch } from "@/lib/api";
 import {
   fetchSidebarTree,
   searchPages,
+  fetchTrashPages,
   createPage,
   getPage,
   updatePage,
   deletePage,
+  restorePage,
+  deletePagePermanently,
   uploadPageAsset,
 } from "@/lib/page-api";
 
@@ -138,6 +141,44 @@ describe("page-api", () => {
       const result = await deletePage("p1");
 
       expect(mockApiFetch).toHaveBeenCalledWith("/pages/p1", {
+        method: "DELETE",
+      });
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe("fetchTrashPages", () => {
+    test("calls apiFetch with trash endpoint", async () => {
+      const mockTrash = [{ id: "t1", title: "Old" }];
+      mockApiFetch.mockResolvedValueOnce(mockTrash);
+
+      const result = await fetchTrashPages();
+
+      expect(mockApiFetch).toHaveBeenCalledWith("/pages/trash");
+      expect(result).toEqual(mockTrash);
+    });
+  });
+
+  describe("restorePage", () => {
+    test("sends PATCH request to restore endpoint", async () => {
+      mockApiFetch.mockResolvedValueOnce({ success: true });
+
+      const result = await restorePage("p1");
+
+      expect(mockApiFetch).toHaveBeenCalledWith("/pages/p1/restore", {
+        method: "PATCH",
+      });
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe("deletePagePermanently", () => {
+    test("sends DELETE request to permanent endpoint", async () => {
+      mockApiFetch.mockResolvedValueOnce({ success: true });
+
+      const result = await deletePagePermanently("p1");
+
+      expect(mockApiFetch).toHaveBeenCalledWith("/pages/p1/permanent", {
         method: "DELETE",
       });
       expect(result).toEqual({ success: true });

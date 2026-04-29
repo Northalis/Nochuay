@@ -7,6 +7,7 @@ import {
   Search,
   Settings,
   FileText,
+  Trash2,
   LogOut,
   User,
   Loader2,
@@ -21,6 +22,9 @@ import {
   useSidebarTree,
   useCreatePage,
   usePageSearch,
+  useTrashPages,
+  useRestorePage,
+  useDeletePagePermanently,
 } from "@/hooks/use-pages";
 import {
   useUpdateAccountEmail,
@@ -55,6 +59,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const updateEmailMutation = useUpdateAccountEmail();
   const updatePasswordMutation = useUpdateAccountPassword();
 
+  const restorePageMutation = useRestorePage();
+  const deletePagePermanentlyMutation = useDeletePagePermanently();
+
   // ── Profile dropdown ──────────────────────────────────────
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -69,6 +76,15 @@ export default function Sidebar({ onClose }: SidebarProps) {
     isLoading: isSearching,
     isError: isSearchError,
   } = usePageSearch(debouncedSearchQuery, searchOpen);
+
+  // ── Trash modal ───────────────────────────────────────────
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [trashFilter, setTrashFilter] = useState("");
+  const {
+    data: trashPages,
+    isLoading: isTrashLoading,
+    isError: isTrashError,
+  } = useTrashPages(trashOpen);
 
   // ── Settings modal ────────────────────────────────────────
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -122,7 +138,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   }, [searchInput]);
 
   useEffect(() => {
-    if (!searchOpen && !settingsOpen) return;
+    if (!searchOpen && !settingsOpen && !trashOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
@@ -143,13 +159,17 @@ export default function Sidebar({ onClose }: SidebarProps) {
         setEmailFeedback(null);
         setPasswordFeedback(null);
       }
+
+      if (trashOpen) {
+        closeTrashModal();
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [searchOpen, settingsOpen]);
+  }, [searchOpen, settingsOpen, trashOpen]);
 
   function handleLogout() {
     setProfileOpen(false);
@@ -167,6 +187,16 @@ export default function Sidebar({ onClose }: SidebarProps) {
     setSearchOpen(false);
     setSearchInput("");
     setDebouncedSearchQuery("");
+  }
+
+  function openTrashModal() {
+    setProfileOpen(false);
+    setTrashOpen(true);
+  }
+
+  function closeTrashModal() {
+    setTrashOpen(false);
+    setTrashFilter("");
   }
 
   function openSettingsModal() {
@@ -192,6 +222,18 @@ export default function Sidebar({ onClose }: SidebarProps) {
   function handleSearchNavigate(pageID: string) {
     closeSearchModal();
     router.push(`/documents/${pageID}`);
+  }
+
+  function handleRestoreTrash(pageID: string) {
+    restorePageMutation.mutate(pageID);
+  }
+
+  function handleDeleteTrash(pageID: string) {
+    const confirmed = window.confirm(
+      "Delete this page permanently? This cannot be undone.",
+    );
+    if (!confirmed) return;
+    deletePagePermanentlyMutation.mutate(pageID);
   }
 
   function handleUpdateEmailSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -341,6 +383,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <span>Settings</span>
         </button>
         <button
+          onClick={openTrashModal}
+          className="flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 w-full text-left"
+        >
+          <Trash2 size={16} />
+          <span>Trash</span>
+        </button>
+        <button
           onClick={handleNewPage}
           disabled={createPage.isPending}
           className="flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 w-full text-left disabled:opacity-50"
@@ -382,7 +431,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* Footer */}
       <div className="px-3 py-3 border-t border-neutral-200 dark:border-neutral-800">
         <p className="text-xs text-neutral-400 dark:text-neutral-500">
-          Nochuay v1.3.0
+          Nochuay v2.0.0
         </p>
       </div>
 
@@ -471,6 +520,125 @@ export default function Sidebar({ onClose }: SidebarProps) {
                     ))}
                   </div>
                 )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {trashOpen && (
+        <div
+          className="fixed inset-0 z-70 flex items-start justify-center bg-neutral-950/45 px-4 py-20"
+          onClick={closeTrashModal}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Trash"
+          >
+            <div className="flex items-center gap-2 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
+              <Trash2 size={16} className="text-neutral-500" />
+              <input
+                value={trashFilter}
+                onChange={(event) => setTrashFilter(event.target.value)}
+                placeholder="Filter trash by title..."
+                className="w-full bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+              />
+              <button
+                onClick={closeTrashModal}
+                className="rounded p-1 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                aria-label="Close trash"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto p-2">
+              {isTrashLoading && (
+                <div className="flex items-center justify-center gap-2 px-3 py-8 text-sm text-neutral-500 dark:text-neutral-400">
+                  <Loader2 size={16} className="animate-spin" />
+                  Loading trash...
+                </div>
+              )}
+
+              {!isTrashLoading && isTrashError && (
+                <p className="px-3 py-4 text-sm text-red-500">
+                  Failed to load trash.
+                </p>
+              )}
+
+              {!isTrashLoading &&
+                !isTrashError &&
+                (!trashPages || trashPages.length === 0) && (
+                  <p className="px-3 py-4 text-sm text-neutral-500 dark:text-neutral-400">
+                    Your trash is empty.
+                  </p>
+                )}
+
+              {!isTrashLoading &&
+                !isTrashError &&
+                trashPages &&
+                trashPages.length > 0 &&
+                (() => {
+                  const normalized = trashFilter.trim().toLowerCase();
+                  const filtered = normalized
+                    ? trashPages.filter((item) =>
+                        item.title.toLowerCase().includes(normalized),
+                      )
+                    : trashPages;
+
+                  if (filtered.length === 0) {
+                    return (
+                      <p className="px-3 py-4 text-sm text-neutral-500 dark:text-neutral-400">
+                        No trashed pages match that filter.
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-1">
+                      {filtered.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        >
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className="text-base leading-none">
+                              {item.icon ?? "📄"}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm text-neutral-800 dark:text-neutral-100">
+                                {item.title}
+                              </p>
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                Deleted{" "}
+                                {new Date(item.deletedAt).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleRestoreTrash(item.id)}
+                              disabled={restorePageMutation.isPending}
+                              className="rounded px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
+                            >
+                              Restore
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTrash(item.id)}
+                              disabled={deletePagePermanentlyMutation.isPending}
+                              className="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              Delete forever
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
             </div>
           </div>
         </div>

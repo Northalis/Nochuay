@@ -26,6 +26,15 @@ func injectUserID(r *http.Request, userID uuid.UUID) *http.Request {
 	return r.WithContext(ctx)
 }
 
+// func decodeResponse(t *testing.T, body *bytes.Buffer) response.Response {
+// 	t.Helper()
+// 	var resp response.Response
+// 	if err := json.NewDecoder(body).Decode(&resp); err != nil {
+// 		t.Fatalf("failed to decode response body: %v", err)
+// 	}
+// 	return resp
+// }
+
 // ── POST /pages (CreatePage) ────────────────────────────────
 
 func TestCreatePage_Success(t *testing.T) {
@@ -388,6 +397,96 @@ func TestDeletePage_Unauthorized(t *testing.T) {
 	}
 }
 
+// ── GET /pages/trash (GetTrash) ─────────────────────────
+
+func TestGetTrash_Success(t *testing.T) {
+	userID := uuid.New()
+
+	mock := &MockPageService{
+		GetTrashFn: func(_ context.Context, uid uuid.UUID) ([]model.PageTrashItem, error) {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			return []model.PageTrashItem{
+				{ID: uuid.New(), Title: "Trashed", DeletedAt: time.Now()},
+			}, nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/pages/trash", nil)
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.GetTrash(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+// ── PATCH /pages/{id}/restore (RestorePage) ─────────────
+
+func TestRestorePage_Success(t *testing.T) {
+	userID := uuid.New()
+	pageID := uuid.New()
+
+	mock := &MockPageService{
+		RestorePageFn: func(_ context.Context, uid, pid uuid.UUID) error {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			if pid != pageID {
+				t.Fatalf("expected pageID %s, got %s", pageID, pid)
+			}
+			return nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodPatch, "/pages/"+pageID.String()+"/restore", nil)
+	req.SetPathValue("id", pageID.String())
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.RestorePage(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+// ── DELETE /pages/{id}/permanent (DeletePagePermanently) ──
+
+func TestDeletePagePermanently_Success(t *testing.T) {
+	userID := uuid.New()
+	pageID := uuid.New()
+
+	mock := &MockPageService{
+		DeletePermanentFn: func(_ context.Context, uid, pid uuid.UUID) error {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			if pid != pageID {
+				t.Fatalf("expected pageID %s, got %s", pageID, pid)
+			}
+			return nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodDelete, "/pages/"+pageID.String()+"/permanent", nil)
+	req.SetPathValue("id", pageID.String())
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.DeletePagePermanently(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
 // ── GET /pages/sidebar (GetSidebar) ─────────────────────────
 
 func TestGetSidebar_Success(t *testing.T) {
@@ -507,6 +606,48 @@ func TestSearchPages_Success(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestSearchPages_EmptyResults(t *testing.T) {
+	userID := uuid.New()
+
+	mock := &MockPageService{
+		SearchPagesFn: func(_ context.Context, uid uuid.UUID, query string, limit int) ([]model.PageSearchResult, error) {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			if query != "missing" {
+				t.Fatalf("expected query 'missing', got '%s'", query)
+			}
+			if limit != 25 {
+				t.Fatalf("expected limit 25, got %d", limit)
+			}
+			return []model.PageSearchResult{}, nil
+		},
+	}
+	h := handler.NewPageHandler(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/pages/search?q=missing", nil)
+	req = injectUserID(req, userID)
+
+	w := httptest.NewRecorder()
+	h.SearchPages(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	resp := decodeResponse(t, w.Body)
+	if resp.Error != nil {
+		t.Fatalf("expected no error, got: %s", *resp.Error)
+	}
+	data, ok := resp.Data.([]interface{})
+	if !ok {
+		t.Fatalf("expected data to be array, got %T", resp.Data)
+	}
+	if len(data) != 0 {
+		t.Fatalf("expected empty results, got %d items", len(data))
 	}
 }
 

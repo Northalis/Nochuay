@@ -63,11 +63,13 @@ CREATE TABLE pages (
     content      JSONB DEFAULT '[]'::jsonb,
     is_published BOOLEAN DEFAULT FALSE,
     created_at   TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at   TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at   TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX idx_pages_parent_id ON pages(parent_id);
 CREATE INDEX idx_pages_user_id ON pages(user_id);
+CREATE INDEX idx_pages_user_deleted_at ON pages(user_id, deleted_at);
 ```
 
 | Column         | Type        | Constraints                        | Description                           |
@@ -82,17 +84,20 @@ CREATE INDEX idx_pages_user_id ON pages(user_id);
 | `is_published` | BOOLEAN     | DEFAULT `FALSE`                    | Publication status (reserved for v2)  |
 | `created_at`   | TIMESTAMPTZ | DEFAULT NOW()                      | Creation timestamp                    |
 | `updated_at`   | TIMESTAMPTZ | DEFAULT NOW()                      | Last modification timestamp           |
+| `deleted_at`   | TIMESTAMPTZ | NULLABLE                           | Soft delete timestamp (null = active) |
 
 **Indexes:**
 
-| Index                 | Column      | Purpose                              |
-| --------------------- | ----------- | ------------------------------------ |
-| `idx_pages_parent_id` | `parent_id` | Fast lookup of children for a parent |
-| `idx_pages_user_id`   | `user_id`   | Fast lookup of all pages for a user  |
+| Index                       | Column                  | Purpose                                    |
+| --------------------------- | ----------------------- | ------------------------------------------ |
+| `idx_pages_parent_id`       | `parent_id`             | Fast lookup of children for a parent       |
+| `idx_pages_user_id`         | `user_id`               | Fast lookup of all pages for a user        |
+| `idx_pages_user_deleted_at` | `user_id`, `deleted_at` | Fast filtering for active vs trashed pages |
 
 **Rollback:** `002_create_pages.down.sql`
 
 ```sql
+DROP INDEX IF EXISTS idx_pages_user_deleted_at;
 DROP INDEX IF EXISTS idx_pages_user_id;
 DROP INDEX IF EXISTS idx_pages_parent_id;
 DROP TABLE IF EXISTS pages;
@@ -140,6 +145,14 @@ Both foreign keys use `ON DELETE CASCADE`:
 - **`parent_id → pages.id`**: Deleting a parent page automatically deletes all descendant pages
 
 This means a single `DELETE FROM pages WHERE id = $1` removes the entire subtree.
+
+### Soft Delete (Trash)
+
+Pages are soft-deleted by setting `deleted_at` instead of removing rows immediately:
+
+- Active queries filter with `deleted_at IS NULL`
+- Trash queries filter with `deleted_at IS NOT NULL`
+- Permanent deletes use a recursive CTE and `DELETE FROM pages` for the subtree
 
 ### Tree Construction
 
@@ -256,12 +269,14 @@ Migrations are managed with [golang-migrate](https://github.com/golang-migrate/m
 
 Located in `nochuay-back/migrations/`:
 
-| File                        | Direction | Description                                   |
-| --------------------------- | --------- | --------------------------------------------- |
-| `001_create_users.up.sql`   | Up        | Creates `uuid-ossp` extension + `users` table |
-| `001_create_users.down.sql` | Down      | Drops `users` table + extension               |
-| `002_create_pages.up.sql`   | Up        | Creates `pages` table + indexes               |
-| `002_create_pages.down.sql` | Down      | Drops indexes + `pages` table                 |
+| File                          | Direction | Description                                   |
+| ----------------------------- | --------- | --------------------------------------------- |
+| `001_create_users.up.sql`     | Up        | Creates `uuid-ossp` extension + `users` table |
+| `001_create_users.down.sql`   | Down      | Drops `users` table + extension               |
+| `002_create_pages.up.sql`     | Up        | Creates `pages` table + indexes               |
+| `002_create_pages.down.sql`   | Down      | Drops indexes + `pages` table                 |
+| `003_add_deleted_at.up.sql`   | Up        | Adds `deleted_at` column + index              |
+| `003_add_deleted_at.down.sql` | Down      | Removes `deleted_at` column + index           |
 
 ### Running Migrations Manually
 
@@ -285,8 +300,8 @@ Create a new pair of files with the next sequence number:
 
 ```bash
 # Example: adding a "tags" table
-touch nochuay-back/migrations/003_create_tags.up.sql
-touch nochuay-back/migrations/003_create_tags.down.sql
+touch nochuay-back/migrations/004_create_tags.up.sql
+touch nochuay-back/migrations/004_create_tags.down.sql
 ```
 
 The `up.sql` file creates the schema change; the `down.sql` reverses it.
@@ -328,6 +343,7 @@ The `user_id` value is always extracted from the JWT token in the auth middlewar
                               │ is_published                 │  │
                               │ created_at                   │  │
                               │ updated_at                   │  │
+                              │ deleted_at                   │  │
                               └──────────────────────────────┘  │
                                         ▲                       │
                                         │   Self-referencing    │

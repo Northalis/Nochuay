@@ -6,20 +6,26 @@ This document covers the testing strategy, test structure, how to run tests, and
 
 ## Test Summary
 
-| Layer                | Suite                       | Tests  | Framework                 |
-| -------------------- | --------------------------- | ------ | ------------------------- |
-| Backend — Service    | `auth_service_test.go`      | 6      | Go `testing`              |
-| Backend — Service    | `page_service_test.go`      | 7      | Go `testing`              |
-| Backend — Handler    | `auth_handler_test.go`      | 12     | Go `testing` + `httptest` |
-| Backend — Handler    | `page_handler_test.go`      | 23     | Go `testing` + `httptest` |
-| Backend — Middleware | `auth_middleware_test.go`   | 6      | Go `testing` + `httptest` |
-| Frontend — Store     | `use-user-store.test.ts`    | 6      | Jest + ts-jest            |
-| Frontend — Store     | `use-sidebar-store.test.ts` | 8      | Jest + ts-jest            |
-| Frontend — Lib       | `api.test.ts`               | 7      | Jest + ts-jest            |
-| Frontend — Lib       | `page-api.test.ts`          | 8      | Jest + ts-jest            |
-| **Total**            |                             | **83** |                           |
+| Layer                 | Suite                          | Focus                                  | Framework                 |
+| --------------------- | ------------------------------ | -------------------------------------- | ------------------------- |
+| Backend — Service     | `auth_service_test.go`         | Password hashing + verification        | Go `testing`              |
+| Backend — Service     | `auth_account_service_test.go` | Account email/password updates         | Go `testing`              |
+| Backend — Service     | `page_service_test.go`         | Tree construction                      | Go `testing`              |
+| Backend — Handler     | `auth_handler_test.go`         | Auth endpoints + account updates       | Go `testing` + `httptest` |
+| Backend — Handler     | `page_handler_test.go`         | Pages, content, search, trash, uploads | Go `testing` + `httptest` |
+| Backend — Middleware  | `auth_middleware_test.go`      | JWT auth middleware                    | Go `testing` + `httptest` |
+| Frontend — Store      | `use-user-store.test.ts`       | Auth store                             | Jest + ts-jest            |
+| Frontend — Store      | `use-sidebar-store.test.ts`    | Sidebar store                          | Jest + ts-jest            |
+| Frontend — Store      | `use-theme-store.test.ts`      | Theme preference store                 | Jest + ts-jest            |
+| Frontend — Hooks      | `use-pages.keys.test.ts`       | User-scoped query keys                 | Jest + ts-jest            |
+| Frontend — Lib        | `api.test.ts`                  | `apiFetch` wrapper                     | Jest + ts-jest            |
+| Frontend — Lib        | `auth-api.test.ts`             | Account API helper calls               | Jest + ts-jest            |
+| Frontend — Lib        | `page-api.test.ts`             | Page API helper calls                  | Jest + ts-jest            |
+| Frontend — Lib        | `breadcrumb.test.ts`           | Breadcrumb path building               | Jest + ts-jest            |
+| Frontend — Components | `components/Sidebar.test.tsx`  | Sidebar search/settings modals         | Jest + RTL                |
+| Frontend — Pages      | `app/document-page.test.tsx`   | Inline title editor debounce           | Jest + RTL                |
 
-**Status:** All 83 tests passing as of February 20, 2026.
+**Status:** Run the test commands below to generate the latest results.
 
 ---
 
@@ -47,7 +53,7 @@ go test -cover ./...
 ```bash
 # Run all frontend tests
 cd nochuay-front
-npx jest --verbose
+npx jest --roots ./test/frontend --verbose
 
 # Run specific test file
 npx jest test/frontend/store/use-user-store.test.ts --verbose
@@ -196,20 +202,24 @@ Covers all page CRUD endpoints including sidebar, content save/get, and error ca
 
 Test fixture JSON files are in `nochuay-back/test/mockdata/`:
 
-| File                           | Used For                    |
-| ------------------------------ | --------------------------- |
-| `auth-signup.json`             | Valid signup request body   |
-| `auth-signup-invalid.json`     | Invalid signup request      |
-| `auth-login.json`              | Valid login request body    |
-| `auth-login-invalid.json`      | Invalid login request       |
-| `page-create.json`             | Root page creation          |
-| `page-create-child.json`       | Child page creation         |
-| `page-update-title.json`       | Title-only update           |
-| `page-update-icon.json`        | Icon-only update            |
-| `page-update-content.json`     | Content update              |
-| `page-update-multiple.json`    | Multi-field update          |
-| `page-save-content.json`       | Content save (PUT endpoint) |
-| `page-save-content-empty.json` | Empty content save          |
+| File                                 | Used For                    |
+| ------------------------------------ | --------------------------- |
+| `auth-signup.json`                   | Valid signup request body   |
+| `auth-signup-invalid.json`           | Invalid signup request      |
+| `auth-login.json`                    | Valid login request body    |
+| `auth-login-invalid.json`            | Invalid login request       |
+| `page-create.json`                   | Root page creation          |
+| `page-create-child.json`             | Child page creation         |
+| `page-update-title.json`             | Title-only update           |
+| `page-update-icon.json`              | Icon-only update            |
+| `page-update-content.json`           | Content update              |
+| `page-update-multiple.json`          | Multi-field update          |
+| `page-save-content.json`             | Content save (PUT endpoint) |
+| `page-save-content-empty.json`       | Empty content save          |
+| `auth-account-email.json`            | Update account email        |
+| `auth-account-email-invalid.json`    | Invalid email update        |
+| `auth-account-password.json`         | Update account password     |
+| `auth-account-password-invalid.json` | Invalid password update     |
 
 ---
 
@@ -225,12 +235,21 @@ Frontend tests use **Jest** with **ts-jest** for TypeScript compilation, running
 
 ```
 nochuay-front/test/frontend/
+├── app/
+│   └── document-page.test.tsx     # Document title editor tests
+├── components/
+│   └── Sidebar.test.tsx           # Sidebar settings/search modal tests
+├── hooks/
+│   └── use-pages.keys.test.ts    # Query key scoping tests
 ├── lib/
-│   ├── api.test.ts              # apiFetch wrapper tests
-│   └── page-api.test.ts         # Page API function tests
+│   ├── api.test.ts               # apiFetch wrapper tests
+│   ├── auth-api.test.ts          # Account API helper tests
+│   ├── breadcrumb.test.ts        # Breadcrumb path builder tests
+│   └── page-api.test.ts          # Page API function tests
 └── store/
-    ├── use-user-store.test.ts   # Auth store tests
-    └── use-sidebar-store.test.ts # Sidebar store tests
+    ├── use-sidebar-store.test.ts # Sidebar store tests
+    ├── use-theme-store.test.ts   # Theme store tests
+    └── use-user-store.test.ts    # Auth store tests
 ```
 
 ### Store Tests
@@ -263,6 +282,16 @@ Tests the Zustand sidebar state (expand/collapse, rename):
 | `collapse` on non-existing id  | No-op behavior                     |
 | `setRenamingId` set and clear  | Rename mode management             |
 
+#### `use-theme-store.test.ts` — Theme Store
+
+Validates default mode, explicit set, toggle behavior, and hydration from localStorage.
+
+### Hook Tests
+
+#### `use-pages.keys.test.ts` — Query Key Scoping
+
+Ensures page-related query keys are scoped by user ID and query input to prevent cache leakage.
+
 ### API Tests
 
 #### `api.test.ts` — apiFetch Wrapper (7 tests)
@@ -293,6 +322,14 @@ Tests the typed page API wrapper functions:
 | PATCH with title   | PATCH /pages/:id   | Title field only          |
 | PATCH with icon    | PATCH /pages/:id   | Icon field only           |
 | DELETE page        | DELETE /pages/:id  | Returns `{success: true}` |
+
+#### `auth-api.test.ts` — Account API Functions
+
+Validates request construction for account email and password updates.
+
+#### `breadcrumb.test.ts` — Breadcrumb Builder
+
+Validates breadcrumb path generation, collapse behavior, and fallback handling.
 
 ---
 
@@ -367,7 +404,7 @@ describe("module name", () => {
 Tests run in GitHub Actions on push and pull request. The CI pipeline:
 
 1. **Build** — Compile backend binary, install frontend dependencies
-2. **Test** — Run `go test ./...` and `npx jest`
+2. **Test** — Run `go test ./...` and `npx jest --roots ./test/frontend --verbose`
 3. **Lint** — Run `go vet ./...` and `npm run lint`
 
 See `.github/workflows/` for pipeline configuration.

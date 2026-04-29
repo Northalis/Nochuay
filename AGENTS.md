@@ -6,7 +6,7 @@
 
 **Name:** Nochuay (Notion Clone)
 **Type:** Hierarchical Note-Taking Application
-**Goal:** v1.3.0 UI refinement and bug fixes
+**Goal:** v2.0.0 soft delete + UI refinement
 **Core Complexity:**
 
 1.  **Recursive Data Structures:** Pages can be infinitely nested inside other pages.
@@ -20,7 +20,7 @@ Nochuay web application is an application for taking notes, Work schedule, other
 ### Backend (Golang)
 
 - **Version:** Latest Stable
-- **Framework:** Standard Library + `Echo`
+- **Framework:** Standard library `net/http` + custom mux
 - **Database:** PostgreSQL 17+.
 - **ORM/Data Access:** Raw SQL or `sqlc` preferred over heavy ORMs.
 - **Auth:** JWT (Stateless) + bcrypt for password hashing.
@@ -31,7 +31,7 @@ Nochuay web application is an application for taking notes, Work schedule, other
 
 ### Frontend (Next.js)
 
-- **Framework:** Next.js 14+ (App Router).
+- **Framework:** Next.js 16+ (App Router).
 - **Language:** TypeScript.
 - **State Management:** Zustand (for global sidebar state).
 - **Styling:** Tailwind CSS.
@@ -91,6 +91,7 @@ CREATE TABLE pages (
     cover_image TEXT,
     content JSONB DEFAULT '[]'::jsonb, -- Store the raw BlockNote JSON array here. Do NOT normalize blocks into a separate table for v1.0.
     is_published BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -173,7 +174,7 @@ interface PageNode extends Page {
     - Use **Recursive CTEs** (Common Table Expressions) for breadcrumbs and tree fetching.
     - Store page content as `JSONB`. Do not normalize blocks into a separate table for v1.0.
 5.  **CORS Policy:**
-    - You MUST configure CORS middleware (e.g., rs/cors or Echo's middleware).
+    - You MUST configure CORS middleware (e.g., rs/cors or net/http middleware).
     - Allow Access-Control-Allow-Origin: http://localhost:3000 (or \* for dev).
     - Allow Headers: Authorization, Content-Type.
 
@@ -198,7 +199,7 @@ nochuay-back/
 └── .env # Secrets
 ```
 
-### API Contract (v1.0.0)
+### API Contract (v2.0.0)
 
 All responses must follow this wrapper format:
 
@@ -215,11 +216,18 @@ All responses must follow this wrapper format:
 | ------ | -------------- | ----------------------------- | ------------------------ | ------------------------- |
 | POST   | /auth/signup   | Register user                 | "{email, password}"      | "{token, user}"           |
 | POST   | /auth/login    | Login user                    | "{email, password}"      | "{token, user}"           |
+| PATCH  | /auth/account/email | Update account email     | "{currentPassword, newEmail}" | User            |
+| PATCH  | /auth/account/password | Update account password | "{currentPassword, newPassword}" | {success: true} |
 | GET    | /pages/sidebar | Critical: Returns nested tree | -                        | "[PageNode, PageNode...]" |
+| GET    | /pages/search  | Search pages by title         | -                        | "[PageSearchResult...]"   |
 | POST   | /pages         | Create new page               | "{parentId, title}"      | Page                      |
 | GET    | /pages/:id     | Get page details              | -                        | Page                      |
 | PATCH  | /pages/:id     | Update properties             | "{title, icon, content}" | Page                      |
-| DELETE | /pages/:id     | Delete page & children        | -                        | {success: true}           |
+| DELETE | /pages/:id     | Move page subtree to Trash    | -                        | {success: true}           |
+| GET    | /pages/trash   | List trashed pages            | -                        | "[PageTrashItem...]"      |
+| PATCH  | /pages/:id/restore | Restore trashed subtree   | -                        | {success: true}           |
+| DELETE | /pages/:id/permanent | Permanently delete subtree | -                   | {success: true}           |
+| POST   | /pages/:id/assets | Upload page asset         | multipart form-data      | Asset metadata            |
 
 ---
 
@@ -275,7 +283,7 @@ nochuay-front/
 ├── components/
 │   ├── editor/                 # BlockNote wrappers
 │   ├── layout/                 # Sidebar and SidebarItem (Recursive)
-│   ├── modals/
+│   ├── providers/
 │   └── ui/                     # shadcn/ui generated components
 ├── hooks/
 ├── lib/

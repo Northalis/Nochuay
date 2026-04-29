@@ -21,7 +21,7 @@ You are an expert **QA Software Engineer** for the **Nochuay** project — a hie
 ## Project Overview
 
 **Name:** Nochuay (Notion Clone)
-**Type:** Hierarchical Note-Taking Application (MVP v1.0.0)
+**Type:** Hierarchical Note-Taking Application (v2.0.0)
 **Core Complexity:**
 
 1. **Recursive Data Structures** — Pages can be infinitely nested via an Adjacency List pattern (`parent_id` → `id`).
@@ -124,13 +124,15 @@ nochuay-front/
 │   │   └── register/page.tsx         # Register form → POST /auth/signup → setAuth → redirect
 │   └── (main)/
 │       ├── layout.tsx                # Client layout: collapsible sidebar + content area
-│       └── page.tsx                  # Dashboard landing: "Select a page or create one"
+│       ├── page.tsx                  # Dashboard landing: "Select a page or create one"
+│       └── documents/[id]/page.tsx   # Document editor view
 ├── components/
 │   ├── editor/
 │   │   └── BlockNoteEditor.tsx       # BlockNote wrapper, auto-saves via debounced PATCH (1s)
 │   ├── layout/
 │   │   ├── Sidebar.tsx               # Sidebar panel: search, settings, new page, recursive items
 │   │   └── SidebarItem.tsx           # Recursive page node: expand/collapse, depth-based indent
+│   ├── providers/
 │   └── ui/                           # shadcn/ui generated components (button, card, input, label)
 ├── hooks/
 │   └── use-pages.ts                  # TanStack Query hooks (useSidebarTree, useCreatePage, etc.)
@@ -163,6 +165,13 @@ All responses follow: `{ "data": <Payload>, "error": null }`
 | GET    | `/pages/{id}`         | Protected | `PageHandler.GetPage`     | —                           | `Page`            |
 | PATCH  | `/pages/{id}`         | Protected | `PageHandler.UpdatePage`  | `{title?, icon?, content?}` | `Page`            |
 | DELETE | `/pages/{id}`         | Protected | `PageHandler.DeletePage`  | —                           | `{success: true}` |
+| GET    | `/pages/search`       | Protected | `PageHandler.SearchPages` | —                           | `[PageSearchResult...]` |
+| GET    | `/pages/trash`        | Protected | `PageHandler.GetTrash`    | —                           | `[PageTrashItem...]` |
+| PATCH  | `/pages/{id}/restore` | Protected | `PageHandler.RestorePage` | —                           | `{success: true}` |
+| DELETE | `/pages/{id}/permanent` | Protected | `PageHandler.DeletePagePermanently` | —             | `{success: true}` |
+| PATCH  | `/auth/account/email` | Protected | `AuthHandler.UpdateAccountEmail` | `{currentPassword, newEmail}` | `User` |
+| PATCH  | `/auth/account/password` | Protected | `AuthHandler.UpdateAccountPassword` | `{currentPassword, newPassword}` | `{success: true}` |
+| POST   | `/pages/{id}/assets`  | Protected | `PageHandler.UploadAsset` | `multipart form-data`      | `{url, contentType, size, name}` |
 | PUT    | `/pages/{id}/content` | Protected | `PageHandler.SaveContent` | `[BlockNote JSON array]`    | `Page`            |
 | GET    | `/pages/{id}/content` | Protected | `PageHandler.GetContent`  | —                           | `content (JSON)`  |
 
@@ -189,6 +198,7 @@ type Page struct {
     CoverImage  *string          `json:"coverImage,omitempty"`
     Content     json.RawMessage  `json:"content"`
     IsPublished bool             `json:"isPublished"`
+    DeletedAt   *time.Time       `json:"deletedAt,omitempty"`
     CreatedAt   time.Time        `json:"createdAt"`
     UpdatedAt   time.Time        `json:"updatedAt"`
 }
@@ -370,6 +380,10 @@ Create separate JSON files in `tests/fixtures/` for each API endpoint that requi
 | `tests/fixtures/page-update-multiple.json`    | `PATCH /pages/{id}`       | Update title + icon + content together      |
 | `tests/fixtures/page-save-content.json`       | `PUT /pages/{id}/content` | Save BlockNote blocks array                 |
 | `tests/fixtures/page-save-content-empty.json` | `PUT /pages/{id}/content` | Save empty content `[]`                     |
+| `tests/fixtures/auth-account-email.json`      | `PATCH /auth/account/email` | Update account email                      |
+| `tests/fixtures/auth-account-email-invalid.json` | `PATCH /auth/account/email` | Invalid account email                  |
+| `tests/fixtures/auth-account-password.json`   | `PATCH /auth/account/password` | Update account password               |
+| `tests/fixtures/auth-account-password-invalid.json` | `PATCH /auth/account/password` | Invalid account password        |
 
 ---
 

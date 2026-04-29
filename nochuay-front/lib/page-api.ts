@@ -1,5 +1,11 @@
 import { apiFetch } from "@/lib/api";
-import { Page, PageNode, PageSearchResult, UploadedAsset } from "@/lib/types";
+import {
+  Page,
+  PageNode,
+  PageSearchResult,
+  PageTrashItem,
+  UploadedAsset,
+} from "@/lib/types";
 
 /* ── Sidebar ────────────────────────────────────────────────── */
 export function fetchSidebarTree(): Promise<PageNode[]> {
@@ -9,6 +15,10 @@ export function fetchSidebarTree(): Promise<PageNode[]> {
 export function searchPages(query: string): Promise<PageSearchResult[]> {
   const encoded = encodeURIComponent(query);
   return apiFetch<PageSearchResult[]>(`/pages/search?q=${encoded}`);
+}
+
+export function fetchTrashPages(): Promise<PageTrashItem[]> {
+  return apiFetch<PageTrashItem[]>("/pages/trash");
 }
 
 /* ── CRUD ────────────────────────────────────────────────────── */
@@ -41,6 +51,20 @@ export function updatePage(
 
 export function deletePage(id: string): Promise<{ success: boolean }> {
   return apiFetch<{ success: boolean }>(`/pages/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function restorePage(id: string): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/pages/${id}/restore`, {
+    method: "PATCH",
+  });
+}
+
+export function deletePagePermanently(
+  id: string,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/pages/${id}/permanent`, {
     method: "DELETE",
   });
 }
