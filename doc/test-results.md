@@ -1,7 +1,7 @@
 # Nochuay — Test Suite Snapshot
 
 **Date:** April 29, 2026  
-**Purpose:** Reference list of current automated test suites. Update after running tests.
+**Purpose:** Reference list of current automated test suites and latest run results.
 
 ---
 
@@ -14,6 +14,32 @@ go test -v ./...
 cd ../nochuay-front
 npx jest --roots ./test/frontend --verbose
 ```
+
+---
+
+## Latest Results
+
+**Backend (page handler only)**
+
+Command:
+
+```bash
+cd nochuay-back
+go test -v ./test/handler/page_handler_test.go
+```
+
+Result: **36 passed, 0 failed**
+
+**Frontend (full suite)**
+
+Command:
+
+```bash
+cd nochuay-front
+npx jest --roots ./test/frontend --verbose
+```
+
+Result: **79 passed, 0 failed**
 
 ---
 
@@ -42,6 +68,8 @@ npx jest --roots ./test/frontend --verbose
 | Account API tests   | `nochuay-front/test/frontend/lib/auth-api.test.ts`            | Account update requests   |
 | Page API tests      | `nochuay-front/test/frontend/lib/page-api.test.ts`            | Page CRUD + helpers       |
 | Breadcrumb tests    | `nochuay-front/test/frontend/lib/breadcrumb.test.ts`          | Breadcrumb path builder   |
+| Sidebar tests       | `nochuay-front/test/frontend/components/Sidebar.test.tsx`     | Settings + search modals  |
+| Document page tests | `nochuay-front/test/frontend/app/document-page.test.tsx`      | Title editor debounce     |
 
 ---
 

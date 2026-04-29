@@ -22,6 +22,8 @@ This document covers the testing strategy, test structure, how to run tests, and
 | Frontend — Lib       | `auth-api.test.ts`             | Account API helper calls               | Jest + ts-jest            |
 | Frontend — Lib       | `page-api.test.ts`             | Page API helper calls                  | Jest + ts-jest            |
 | Frontend — Lib       | `breadcrumb.test.ts`           | Breadcrumb path building               | Jest + ts-jest            |
+| Frontend — Components | `components/Sidebar.test.tsx`  | Sidebar search/settings modals         | Jest + RTL                |
+| Frontend — Pages     | `app/document-page.test.tsx`   | Inline title editor debounce           | Jest + RTL                |
 
 **Status:** Run the test commands below to generate the latest results.
 
@@ -214,6 +216,10 @@ Test fixture JSON files are in `nochuay-back/test/mockdata/`:
 | `page-update-multiple.json`    | Multi-field update          |
 | `page-save-content.json`       | Content save (PUT endpoint) |
 | `page-save-content-empty.json` | Empty content save          |
+| `auth-account-email.json`      | Update account email        |
+| `auth-account-email-invalid.json` | Invalid email update     |
+| `auth-account-password.json`   | Update account password     |
+| `auth-account-password-invalid.json` | Invalid password update |
 
 ---
 
@@ -229,6 +235,10 @@ Frontend tests use **Jest** with **ts-jest** for TypeScript compilation, running
 
 ```
 nochuay-front/test/frontend/
+├── app/
+│   └── document-page.test.tsx     # Document title editor tests
+├── components/
+│   └── Sidebar.test.tsx           # Sidebar settings/search modal tests
 ├── hooks/
 │   └── use-pages.keys.test.ts    # Query key scoping tests
 ├── lib/
