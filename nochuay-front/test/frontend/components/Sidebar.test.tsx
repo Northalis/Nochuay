@@ -133,25 +133,24 @@ describe("Sidebar", () => {
         selector ? selector(mockSidebarState) : mockSidebarState,
     );
 
-    mockUseThemeStore.mockImplementation((selector?: (state: any) => unknown) =>
-      selector ? selector(mockThemeState) : mockThemeState,
+    mockUseThemeStore.mockImplementation(
+      (selector?: (state: any) => unknown) =>
+        selector ? selector(mockThemeState) : mockThemeState,
     );
 
-    mockUsePageSearch.mockImplementation(
-      (query: string, enabled: boolean) => {
-        if (!enabled || query.length === 0) {
-          return { data: [], isLoading: false, isError: false };
-        }
-        if (query === "road") {
-          return {
-            data: [{ id: "page-1", title: "Roadmap", icon: null }],
-            isLoading: false,
-            isError: false,
-          };
-        }
+    mockUsePageSearch.mockImplementation((query: string, enabled: boolean) => {
+      if (!enabled || query.length === 0) {
         return { data: [], isLoading: false, isError: false };
-      },
-    );
+      }
+      if (query === "road") {
+        return {
+          data: [{ id: "page-1", title: "Roadmap", icon: null }],
+          isLoading: false,
+          isError: false,
+        };
+      }
+      return { data: [], isLoading: false, isError: false };
+    });
   });
 
   afterEach(() => {

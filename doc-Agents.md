@@ -18,7 +18,7 @@ You are an expert technical writer for the **Nochuay** project — a hierarchica
 ## Project Overview
 
 **Name:** Nochuay (Notion Clone)
-**Type:** Hierarchical Note-Taking Application (MVP v1.0.0)
+**Type:** Hierarchical Note-Taking Application (v2.0.0)
 **Core Complexity:**
 
 1. **Recursive Data Structures** — Pages can be infinitely nested via an Adjacency List pattern (`parent_id` → `id`).
@@ -141,13 +141,15 @@ nochuay-front/
 │   │   └── register/page.tsx         # Register form → POST /auth/signup → setAuth → redirect
 │   └── (main)/
 │       ├── layout.tsx                # Client layout: collapsible sidebar + content area
-│       └── page.tsx                  # Dashboard landing: "Select a page or create one"
+│       ├── page.tsx                  # Dashboard landing: "Select a page or create one"
+│       └── documents/[id]/page.tsx   # Document editor view
 ├── components/
 │   ├── editor/
 │   │   └── BlockNoteEditor.tsx       # BlockNote wrapper, auto-saves via debounced PATCH (1s)
 │   ├── layout/
 │   │   ├── Sidebar.tsx               # Sidebar panel: search, settings, new page, recursive items
 │   │   └── SidebarItem.tsx           # Recursive page node: expand/collapse, depth-based indent
+│   ├── providers/
 │   └── ui/                           # shadcn/ui generated components (button, card, input, label)
 ├── lib/
 │   ├── api.ts                        # apiFetch<T>() — Fetch wrapper with auth header injection
@@ -186,7 +188,14 @@ All responses follow: `{ "data": <Payload>, "error": null }`
 | POST   | `/pages`              | Protected | `PageHandler.CreatePage`  | Create page → `Page`                 |
 | GET    | `/pages/{id}`         | Protected | `PageHandler.GetPage`     | Get page details → `Page`            |
 | PATCH  | `/pages/{id}`         | Protected | `PageHandler.UpdatePage`  | Partial update → `Page`              |
-| DELETE | `/pages/{id}`         | Protected | `PageHandler.DeletePage`  | Delete page + children → `{success}` |
+| DELETE | `/pages/{id}`         | Protected | `PageHandler.DeletePage`  | Move page to Trash → `{success}` |
+| GET    | `/pages/search`       | Protected | `PageHandler.SearchPages` | Search pages by title → `[PageSearchResult...]` |
+| GET    | `/pages/trash`        | Protected | `PageHandler.GetTrash`    | List trashed pages → `[PageTrashItem...]` |
+| PATCH  | `/pages/{id}/restore` | Protected | `PageHandler.RestorePage` | Restore subtree → `{success}` |
+| DELETE | `/pages/{id}/permanent` | Protected | `PageHandler.DeletePagePermanently` | Permanent delete → `{success}` |
+| PATCH  | `/auth/account/email` | Protected | `AuthHandler.UpdateAccountEmail` | Update email → `User` |
+| PATCH  | `/auth/account/password` | Protected | `AuthHandler.UpdateAccountPassword` | Update password → `{success}` |
+| POST   | `/pages/{id}/assets`  | Protected | `PageHandler.UploadAsset` | Upload asset → `{url, contentType, size, name}` |
 | PUT    | `/pages/{id}/content` | Protected | `PageHandler.SaveContent` | Save block content                   |
 | GET    | `/pages/{id}/content` | Protected | `PageHandler.GetContent`  | Get block content                    |
 
@@ -197,7 +206,7 @@ All responses follow: `{ "data": <Payload>, "error": null }`
 Two PostgreSQL tables using UUID primary keys and an adjacency list for page hierarchy:
 
 - **`users`** — `id` (UUID PK), `email` (unique), `password_hash`, `created_at`
-- **`pages`** — `id` (UUID PK), `user_id` (FK → users), `parent_id` (FK → pages, self-ref, CASCADE delete), `title`, `icon`, `cover_image`, `content` (JSONB), `is_published`, `created_at`, `updated_at`
+- **`pages`** — `id` (UUID PK), `user_id` (FK → users), `parent_id` (FK → pages, self-ref, CASCADE delete), `title`, `icon`, `cover_image`, `content` (JSONB), `is_published`, `deleted_at`, `created_at`, `updated_at`
 - Indexes on `parent_id` and `user_id`
 
 Full DDL is in `nochuay-back/migrations/001_create_users.up.sql` and `002_create_pages.up.sql`.

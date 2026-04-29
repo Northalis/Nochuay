@@ -6,24 +6,24 @@ This document covers the testing strategy, test structure, how to run tests, and
 
 ## Test Summary
 
-| Layer                | Suite                          | Focus                                  | Framework                 |
-| -------------------- | ------------------------------ | -------------------------------------- | ------------------------- |
-| Backend — Service    | `auth_service_test.go`         | Password hashing + verification        | Go `testing`              |
-| Backend — Service    | `auth_account_service_test.go` | Account email/password updates         | Go `testing`              |
-| Backend — Service    | `page_service_test.go`         | Tree construction                      | Go `testing`              |
-| Backend — Handler    | `auth_handler_test.go`         | Auth endpoints + account updates       | Go `testing` + `httptest` |
-| Backend — Handler    | `page_handler_test.go`         | Pages, content, search, trash, uploads | Go `testing` + `httptest` |
-| Backend — Middleware | `auth_middleware_test.go`      | JWT auth middleware                    | Go `testing` + `httptest` |
-| Frontend — Store     | `use-user-store.test.ts`       | Auth store                             | Jest + ts-jest            |
-| Frontend — Store     | `use-sidebar-store.test.ts`    | Sidebar store                          | Jest + ts-jest            |
-| Frontend — Store     | `use-theme-store.test.ts`      | Theme preference store                 | Jest + ts-jest            |
-| Frontend — Hooks     | `use-pages.keys.test.ts`       | User-scoped query keys                 | Jest + ts-jest            |
-| Frontend — Lib       | `api.test.ts`                  | `apiFetch` wrapper                     | Jest + ts-jest            |
-| Frontend — Lib       | `auth-api.test.ts`             | Account API helper calls               | Jest + ts-jest            |
-| Frontend — Lib       | `page-api.test.ts`             | Page API helper calls                  | Jest + ts-jest            |
-| Frontend — Lib       | `breadcrumb.test.ts`           | Breadcrumb path building               | Jest + ts-jest            |
+| Layer                 | Suite                          | Focus                                  | Framework                 |
+| --------------------- | ------------------------------ | -------------------------------------- | ------------------------- |
+| Backend — Service     | `auth_service_test.go`         | Password hashing + verification        | Go `testing`              |
+| Backend — Service     | `auth_account_service_test.go` | Account email/password updates         | Go `testing`              |
+| Backend — Service     | `page_service_test.go`         | Tree construction                      | Go `testing`              |
+| Backend — Handler     | `auth_handler_test.go`         | Auth endpoints + account updates       | Go `testing` + `httptest` |
+| Backend — Handler     | `page_handler_test.go`         | Pages, content, search, trash, uploads | Go `testing` + `httptest` |
+| Backend — Middleware  | `auth_middleware_test.go`      | JWT auth middleware                    | Go `testing` + `httptest` |
+| Frontend — Store      | `use-user-store.test.ts`       | Auth store                             | Jest + ts-jest            |
+| Frontend — Store      | `use-sidebar-store.test.ts`    | Sidebar store                          | Jest + ts-jest            |
+| Frontend — Store      | `use-theme-store.test.ts`      | Theme preference store                 | Jest + ts-jest            |
+| Frontend — Hooks      | `use-pages.keys.test.ts`       | User-scoped query keys                 | Jest + ts-jest            |
+| Frontend — Lib        | `api.test.ts`                  | `apiFetch` wrapper                     | Jest + ts-jest            |
+| Frontend — Lib        | `auth-api.test.ts`             | Account API helper calls               | Jest + ts-jest            |
+| Frontend — Lib        | `page-api.test.ts`             | Page API helper calls                  | Jest + ts-jest            |
+| Frontend — Lib        | `breadcrumb.test.ts`           | Breadcrumb path building               | Jest + ts-jest            |
 | Frontend — Components | `components/Sidebar.test.tsx`  | Sidebar search/settings modals         | Jest + RTL                |
-| Frontend — Pages     | `app/document-page.test.tsx`   | Inline title editor debounce           | Jest + RTL                |
+| Frontend — Pages      | `app/document-page.test.tsx`   | Inline title editor debounce           | Jest + RTL                |
 
 **Status:** Run the test commands below to generate the latest results.
 
@@ -202,24 +202,24 @@ Covers all page CRUD endpoints including sidebar, content save/get, and error ca
 
 Test fixture JSON files are in `nochuay-back/test/mockdata/`:
 
-| File                           | Used For                    |
-| ------------------------------ | --------------------------- |
-| `auth-signup.json`             | Valid signup request body   |
-| `auth-signup-invalid.json`     | Invalid signup request      |
-| `auth-login.json`              | Valid login request body    |
-| `auth-login-invalid.json`      | Invalid login request       |
-| `page-create.json`             | Root page creation          |
-| `page-create-child.json`       | Child page creation         |
-| `page-update-title.json`       | Title-only update           |
-| `page-update-icon.json`        | Icon-only update            |
-| `page-update-content.json`     | Content update              |
-| `page-update-multiple.json`    | Multi-field update          |
-| `page-save-content.json`       | Content save (PUT endpoint) |
-| `page-save-content-empty.json` | Empty content save          |
-| `auth-account-email.json`      | Update account email        |
-| `auth-account-email-invalid.json` | Invalid email update     |
-| `auth-account-password.json`   | Update account password     |
-| `auth-account-password-invalid.json` | Invalid password update |
+| File                                 | Used For                    |
+| ------------------------------------ | --------------------------- |
+| `auth-signup.json`                   | Valid signup request body   |
+| `auth-signup-invalid.json`           | Invalid signup request      |
+| `auth-login.json`                    | Valid login request body    |
+| `auth-login-invalid.json`            | Invalid login request       |
+| `page-create.json`                   | Root page creation          |
+| `page-create-child.json`             | Child page creation         |
+| `page-update-title.json`             | Title-only update           |
+| `page-update-icon.json`              | Icon-only update            |
+| `page-update-content.json`           | Content update              |
+| `page-update-multiple.json`          | Multi-field update          |
+| `page-save-content.json`             | Content save (PUT endpoint) |
+| `page-save-content-empty.json`       | Empty content save          |
+| `auth-account-email.json`            | Update account email        |
+| `auth-account-email-invalid.json`    | Invalid email update        |
+| `auth-account-password.json`         | Update account password     |
+| `auth-account-password-invalid.json` | Invalid password update     |
 
 ---
 

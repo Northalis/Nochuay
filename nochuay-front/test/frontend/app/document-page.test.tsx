@@ -54,7 +54,9 @@ describe("DocumentPage", () => {
     jest.clearAllMocks();
 
     mockUseUserStore.mockImplementation((selector?: (state: any) => unknown) =>
-      selector ? selector({ user: { id: "user-1" } }) : { user: { id: "user-1" } },
+      selector
+        ? selector({ user: { id: "user-1" } })
+        : { user: { id: "user-1" } },
     );
 
     mockUseSidebarTree.mockReturnValue({ data: [] });
