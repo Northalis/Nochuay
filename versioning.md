@@ -106,7 +106,7 @@
   - local file/image uploads in editor
   - user-controlled dark/light theme switching
 
-### Workspace Instruction Update (AGENTS.md)
+### v1.0.1 Bugfixed
 
 - Updated project goal context to MVP v1.0.1 stabilization.
 - Corrected frontend development command path to `cd nochuay-front && npm run dev`.

@@ -2,8 +2,8 @@
 
 Comprehensive documentation for the Nochuay project — a hierarchical note-taking web application (Notion clone).
 
-**Version:** MVP v1.0.0  
-**Last Updated:** February 20, 2026
+**Version:** v2.0.0  
+**Last Updated:** April 29, 2026
 
 ---
 
@@ -18,7 +18,7 @@ Comprehensive documentation for the Nochuay project — a hierarchical note-taki
 | 05  | [Frontend Guide](05-frontend-guide.md)               | Components, state management, editor integration  |
 | 06  | [Development Workflow](06-development-workflow.md)   | Docker, hot reload, debugging, adding features    |
 | 07  | [Testing Guide](07-testing-guide.md)                 | Test strategy, running tests, writing new tests   |
-| —   | [Test Results](test-results.md)                      | Detailed test run report (83/83 passing)          |
+| —   | [Test Results](test-results.md)                      | Test suite snapshot and run instructions          |
 
 ---
 
@@ -41,13 +41,13 @@ docker-compose up --build
 
 ## Project at a Glance
 
-| Aspect         | Technology                                |
-| -------------- | ----------------------------------------- |
-| Backend        | Go 1.25+ (stdlib + pgx)                   |
-| Frontend       | Next.js 16+ / React 19 / TypeScript       |
-| Database       | PostgreSQL 17                             |
-| Editor         | BlockNote 0.46                            |
-| State          | Zustand 5 + TanStack Query 5              |
-| Auth           | JWT (HS256, 72h) + bcrypt                 |
-| Infrastructure | Docker Compose (4 services)               |
-| Tests          | 83 tests (Go testing + Jest), all passing |
+| Aspect         | Technology                          |
+| -------------- | ----------------------------------- |
+| Backend        | Go 1.25+ (stdlib + pgx)             |
+| Frontend       | Next.js 16+ / React 19 / TypeScript |
+| Database       | PostgreSQL 17                       |
+| Editor         | BlockNote 0.46                      |
+| State          | Zustand 5 + TanStack Query 5        |
+| Auth           | JWT (HS256, 72h) + bcrypt           |
+| Infrastructure | Docker Compose (4 services)         |
+| Tests          | Go + Jest (see 07-testing-guide.md) |

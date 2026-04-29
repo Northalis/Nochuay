@@ -140,12 +140,15 @@ app/
 
 ### State Management
 
-| Store               | Library        | Purpose                                              | Persistence    |
-| ------------------- | -------------- | ---------------------------------------------------- | -------------- |
-| `useUserStore`      | Zustand        | Auth state: `token`, `user`, `setAuth()`, `logout()` | `localStorage` |
-| `useSidebarStore`   | Zustand        | UI state: `expandedIds` (Set), `renamingId`          | In-memory only |
-| Sidebar tree data   | TanStack Query | Server state: page tree from `GET /pages/sidebar`    | Query cache    |
-| Page CRUD mutations | TanStack Query | Mutations: create, update, delete pages              | —              |
+| Store               | Library        | Purpose                                                                       | Persistence    |
+| ------------------- | -------------- | ----------------------------------------------------------------------------- | -------------- |
+| `useUserStore`      | Zustand        | Auth state: `token`, `user`, `setAuth()`, `logout()`                          | `localStorage` |
+| `useSidebarStore`   | Zustand        | UI state: `expandedIds` (Set), `renamingId`                                   | In-memory only |
+| Sidebar tree data   | TanStack Query | `GET /pages/sidebar` via `pageKeys.sidebar.byUser(userID)`                    | Query cache    |
+| Page detail data    | TanStack Query | `GET /pages/{id}` via `pageKeys.detail(userID, id)`                           | Query cache    |
+| Search results      | TanStack Query | `GET /pages/search?q=...` via `pageKeys.search.byUser(userID, query)`         | Query cache    |
+| Trash list          | TanStack Query | `GET /pages/trash` via `pageKeys.trash.byUser(userID)`                        | Query cache    |
+| Page CRUD mutations | TanStack Query | Mutations: create, update, delete, restore, delete permanently, upload assets | —              |
 
 ### Data Flow
 
@@ -161,7 +164,10 @@ Component (e.g., SidebarItem)
               │
               ├── POST/PATCH/DELETE to backend via apiFetch()
               │
-              └── onSuccess → invalidateQueries(["pages", "sidebar"])
+                ├── onSuccess → invalidateQueries(pageKeys.sidebar.all)
+                │              invalidateQueries(pageKeys.search.all)
+                │              invalidateQueries(pageKeys.detailPrefix)
+                │              invalidateQueries(pageKeys.trash.all)
                                     │
                                     ▼
                               Sidebar re-renders with fresh data

@@ -172,6 +172,89 @@ curl -X POST http://localhost:8080/auth/login \
 
 ---
 
+#### `PATCH /auth/account/email`
+
+Update the authenticated user's email address.
+
+**Request Body:**
+
+| Field             | Type   | Required | Description                          |
+| ----------------- | ------ | -------- | ------------------------------------ |
+| `currentPassword` | string | Yes      | Current account password             |
+| `newEmail`        | string | Yes      | New email address (must contain `@`) |
+
+```bash
+curl -X PATCH http://localhost:8080/auth/account/email \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"currentPassword": "password123", "newEmail": "new@example.com"}'
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "data": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "email": "new@example.com",
+    "createdAt": "2026-02-20T10:30:00Z"
+  },
+  "error": null
+}
+```
+
+**Error Responses:**
+
+| Status | Error Message                               | Cause                   |
+| ------ | ------------------------------------------- | ----------------------- |
+| 400    | `newEmail and currentPassword are required` | Missing required fields |
+| 400    | `invalid email format`                      | Email missing `@`       |
+| 401    | `invalid current password`                  | Password does not match |
+| 404    | `user not found`                            | User record missing     |
+| 409    | `user with this email already exists`       | Duplicate email         |
+| 500    | `failed to update account email`            | Unexpected server error |
+
+---
+
+#### `PATCH /auth/account/password`
+
+Update the authenticated user's password.
+
+**Request Body:**
+
+| Field             | Type   | Required | Validation               |
+| ----------------- | ------ | -------- | ------------------------ |
+| `currentPassword` | string | Yes      | Current account password |
+| `newPassword`     | string | Yes      | Minimum 6 characters     |
+
+```bash
+curl -X PATCH http://localhost:8080/auth/account/password \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"currentPassword": "password123", "newPassword": "newPassword123"}'
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "data": { "success": true },
+  "error": null
+}
+```
+
+**Error Responses:**
+
+| Status | Error Message                                  | Cause                   |
+| ------ | ---------------------------------------------- | ----------------------- |
+| 400    | `currentPassword and newPassword are required` | Missing required fields |
+| 400    | `newPassword must be at least 6 characters`    | Password too short      |
+| 401    | `invalid current password`                     | Password does not match |
+| 404    | `user not found`                               | User record missing     |
+| 500    | `failed to update account password`            | Unexpected server error |
+
+---
+
 ### Pages
 
 All page endpoints require authentication (Bearer JWT).
@@ -224,6 +307,51 @@ curl http://localhost:8080/pages/sidebar \
 ```
 
 Returns an empty array `[]` if the user has no pages.
+
+---
+
+#### `GET /pages/search`
+
+Search page titles for the authenticated user.
+
+**Query Parameters:**
+
+| Param | Type   | Required | Description                     |
+| ----- | ------ | -------- | ------------------------------- |
+| `q`   | string | Yes      | Search query (case-insensitive) |
+
+Results are ordered with prefix matches first, then A-Z by title.
+The backend limits results to 25 items per request.
+
+**Request:**
+
+```bash
+curl "http://localhost:8080/pages/search?q=roadmap" \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "data": [
+    {
+      "id": "page-uuid",
+      "parentId": null,
+      "title": "Roadmap",
+      "icon": "🧭"
+    }
+  ],
+  "error": null
+}
+```
+
+**Error Responses:**
+
+| Status | Error Message                     | Cause                    |
+| ------ | --------------------------------- | ------------------------ |
+| 400    | `query parameter 'q' is required` | Missing or empty query   |
+| 401    | `unauthorized`                    | Missing or invalid token |
 
 ---
 
@@ -406,11 +534,11 @@ Partially update a page's properties. Only include fields you want to change.
 
 **Request Body:**
 
-| Field     | Type               | Description              |
-| --------- | ------------------ | ------------------------ |
-| `title`   | string             | New page title           |
-| `icon`    | string             | Emoji or icon identifier |
-| `content` | JSON (stringified) | BlockNote JSON content   |
+| Field     | Type   | Description                                   |
+| --------- | ------ | --------------------------------------------- |
+| `title`   | string | New page title                                |
+| `icon`    | string | Emoji or icon identifier                      |
+| `content` | JSON   | BlockNote JSON content (array or stringified) |
 
 ```bash
 # Update title only
