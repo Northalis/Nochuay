@@ -15,7 +15,7 @@ import { FileImage, FileText, Paperclip } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Page, PageNode } from "@/lib/types";
-import { pageKeys, useSidebarTree } from "@/hooks/use-pages";
+import { pageKeys, useSidebarTree, useUpdatePage } from "@/hooks/use-pages";
 import { uploadPageAsset } from "@/lib/page-api";
 import { useThemeStore } from "@/store/use-theme-store";
 import { schema } from "./editor-schema";
@@ -35,6 +35,34 @@ function collectPageIds(nodes: PageNode[]): Set<string> {
     }
   }
   return ids;
+}
+
+/** Recursively build a map of pageId -> title from the sidebar tree */
+function buildPageTitleMap(nodes: PageNode[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const node of nodes) {
+    map.set(node.id, node.title);
+    if (node.children.length > 0) {
+      for (const [id, title] of buildPageTitleMap(node.children)) {
+        map.set(id, title);
+      }
+    }
+  }
+  return map;
+}
+
+/** Find the direct children of a target page ID within the sidebar tree */
+function findDirectChildren(nodes: PageNode[], targetId: string): PageNode[] | null {
+  for (const node of nodes) {
+    if (node.id === targetId) {
+      return node.children;
+    }
+    if (node.children.length > 0) {
+      const found = findDirectChildren(node.children, targetId);
+      if (found) return found;
+    }
+  }
+  return null;
 }
 
 interface BlockNoteEditorProps {
@@ -63,6 +91,7 @@ export default function BlockNoteEditor({
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
   const themeMode = useThemeStore((state) => state.mode);
+  const { mutate: savePageContent } = useUpdatePage();
 
   // Track page-block pageIds so we can detect removals in onChange
   const knownPageBlockIds = useRef<Set<string>>(new Set());
@@ -93,18 +122,16 @@ export default function BlockNoteEditor({
         clearTimeout(debounceTimer.current);
       }
 
-      debounceTimer.current = setTimeout(async () => {
-        try {
-          await apiFetch(`/pages/${pageId}`, {
-            method: "PATCH",
-            body: JSON.stringify({ content: JSON.stringify(blocks) }),
-          });
-        } catch (err) {
-          console.error("Auto-save failed:", err);
-        }
+      debounceTimer.current = setTimeout(() => {
+        savePageContent(
+          { id: pageId, content: JSON.stringify(blocks) },
+          {
+            onError: (err) => console.error("Auto-save failed:", err),
+          }
+        );
       }, 1000);
     },
-    [pageId],
+    [pageId, savePageContent],
   );
 
   // Subscribe to sidebar tree data to detect deleted pages
@@ -192,30 +219,95 @@ export default function BlockNoteEditor({
     [pageId, pickFile],
   );
 
-  // Auto-remove page blocks whose referenced page no longer exists
+  // Auto-remove page blocks whose referenced page no longer exists,
+  // sync pageTitle prop of page blocks to match the latest sidebar title,
+  // and insert new page blocks for children added via the sidebar.
   useEffect(() => {
     if (!sidebarPages) return;
 
-    const existingIds = collectPageIds(sidebarPages);
+    const titleMap = buildPageTitleMap(sidebarPages);
+    const directChildren = findDirectChildren(sidebarPages, pageId) || [];
+
     const staleBlockIds: string[] = [];
+    const blocksToUpdate: { id: string; title: string }[] = [];
+    const existingChildIds = new Set<string>();
 
     for (const block of editor.document) {
       if (
         block.type === "page" &&
         "pageId" in block.props &&
-        (block.props as { pageId: string }).pageId &&
-        !existingIds.has((block.props as { pageId: string }).pageId)
+        (block.props as { pageId: string }).pageId
       ) {
-        staleBlockIds.push(block.id);
+        const blockPageId = (block.props as { pageId: string }).pageId;
+        existingChildIds.add(blockPageId);
+        const latestTitle = titleMap.get(blockPageId);
+
+        if (latestTitle === undefined) {
+          // Page no longer exists → mark for removal
+          staleBlockIds.push(block.id);
+        } else if ((block.props as { pageTitle: string }).pageTitle !== latestTitle) {
+          // Title changed → mark for update
+          blocksToUpdate.push({ id: block.id, title: latestTitle });
+        }
       }
     }
 
-    if (staleBlockIds.length > 0) {
-      editor.removeBlocks(staleBlockIds);
-      // Trigger auto-save to persist the cleanup
-      saveContent(editor.document);
+    const missingChildren = directChildren.filter(child => !existingChildIds.has(child.id));
+
+    if (staleBlockIds.length > 0 || blocksToUpdate.length > 0 || missingChildren.length > 0) {
+      // Defer modifications to avoid React render cycle conflicts (isConnected error)
+      setTimeout(() => {
+        let changed = false;
+
+        for (const update of blocksToUpdate) {
+          try {
+            editor.updateBlock(update.id, {
+              type: "page",
+              props: { pageTitle: update.title },
+            });
+            changed = true;
+          } catch (e) {
+            console.error("Failed to update page block:", e);
+          }
+        }
+
+        if (staleBlockIds.length > 0) {
+          try {
+            editor.removeBlocks(staleBlockIds);
+            changed = true;
+          } catch (e) {
+            console.error("Failed to remove stale page blocks:", e);
+          }
+        }
+
+        if (missingChildren.length > 0) {
+          try {
+            const newBlocks = missingChildren.map(child => ({
+              type: "page" as const,
+              props: { pageId: child.id, pageTitle: child.title },
+            }));
+            
+            // Insert them at the end of the document
+            const lastBlock = editor.document[editor.document.length - 1];
+            editor.insertBlocks(newBlocks as never[], lastBlock, "after");
+            
+            // Track the new page blocks so they aren't treated as removed
+            for (const child of missingChildren) {
+              knownPageBlockIds.current.add(child.id);
+            }
+            changed = true;
+          } catch (e) {
+            console.error("Failed to insert missing child page blocks:", e);
+          }
+        }
+
+        if (changed) {
+          // Trigger auto-save to persist the cleanup
+          saveContent(editor.document);
+        }
+      }, 0);
     }
-  }, [sidebarPages, editor, saveContent]);
+  }, [sidebarPages, editor, saveContent, pageId]);
 
   // Build the slash menu items: default items + custom "Page" command
   const getSlashMenuItems = (editorInstance: typeof editor) => {
@@ -329,7 +421,7 @@ export default function BlockNoteEditor({
     ];
   };
 
-  // Detect page blocks removed from editor and delete the actual pages
+  // Detect page blocks removed from editor and move the actual pages to trash
   const handleRemovedPageBlocks = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (blocks: any[]) => {
@@ -348,14 +440,14 @@ export default function BlockNoteEditor({
         }
       }
 
-      // Delete each removed page from the backend
+      // Move each removed page to trash in the backend
       for (const removedPageId of removedIds) {
         apiFetch(`/pages/${removedPageId}`, { method: "DELETE" })
           .then(() => {
             queryClient.invalidateQueries({ queryKey: pageKeys.sidebar.all });
           })
           .catch((err) => {
-            console.error("Failed to delete nested page:", err);
+            console.error("Failed to move nested page to trash:", err);
           });
       }
 
