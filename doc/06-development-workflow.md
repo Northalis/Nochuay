@@ -194,12 +194,12 @@ Follow the layered architecture (Repository → Service → Handler):
 curl http://localhost:8080/api/health
 
 # Login and capture token
-TOKEN=$(curl -s -X POST http://localhost:8080/api/api/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123"}' | jq -r '.data.token')
 
 # Use token for authenticated requests
-curl http://localhost:8080/api/api/pages/sidebar \
+curl http://localhost:8080/api/pages/sidebar \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 

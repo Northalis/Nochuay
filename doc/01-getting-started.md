@@ -107,7 +107,7 @@ Navigate to [http://localhost:3000](http://localhost:3000) in your browser. You 
 ### Register a Test User
 
 ```bash
-curl -X POST http://localhost:8080/api/api/auth/signup \
+curl -X POST http://localhost:8080/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "password123"}'
 ```

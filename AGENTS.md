@@ -62,7 +62,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 
 ### Frontend (.env.local)
 
-NEXT_PUBLIC_API_URL=http://localhost:8080/apiapi/
+NEXT_PUBLIC_API_URL=http://localhost:8080/api/
 
 ---
 

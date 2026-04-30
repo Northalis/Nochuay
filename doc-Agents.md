@@ -137,8 +137,8 @@ nochuay-front/
 │   ├── layout.tsx                    # Root HTML shell, Geist fonts, metadata
 │   ├── globals.css                   # Global Tailwind styles
 │   ├── (auth)/
-│   │   ├── login/page.tsx            # Login form → POST /api/api/auth/login → setAuth → redirect /
-│   │   └── register/page.tsx         # Register form → POST /api/api/auth/signup → setAuth → redirect
+│   │   ├── login/page.tsx            # Login form → POST /api/auth/login → setAuth → redirect /
+│   │   └── register/page.tsx         # Register form → POST /api/auth/signup → setAuth → redirect
 │   └── (main)/
 │       ├── layout.tsx                # Client layout: collapsible sidebar + content area
 │       ├── page.tsx                  # Dashboard landing: "Select a page or create one"

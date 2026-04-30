@@ -84,7 +84,7 @@ curl http://localhost:8080/api/health
 
 ### Authentication
 
-#### `POST /api/api/auth/signup`
+#### `POST /api/auth/signup`
 
 Register a new user account.
 
@@ -96,7 +96,7 @@ Register a new user account.
 | `password` | string | Yes      | Minimum 6 characters |
 
 ```bash
-curl -X POST http://localhost:8080/api/api/auth/signup \
+curl -X POST http://localhost:8080/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "securepass"}'
 ```
@@ -129,7 +129,7 @@ curl -X POST http://localhost:8080/api/api/auth/signup \
 
 ---
 
-#### `POST /api/api/auth/login`
+#### `POST /api/auth/login`
 
 Authenticate an existing user.
 
@@ -141,7 +141,7 @@ Authenticate an existing user.
 | `password` | string | Yes      |
 
 ```bash
-curl -X POST http://localhost:8080/api/api/auth/login \
+curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "securepass"}'
 ```
@@ -172,7 +172,7 @@ curl -X POST http://localhost:8080/api/api/auth/login \
 
 ---
 
-#### `PATCH /api/api/auth/account/email`
+#### `PATCH /api/auth/account/email`
 
 Update the authenticated user's email address.
 
@@ -184,7 +184,7 @@ Update the authenticated user's email address.
 | `newEmail`        | string | Yes      | New email address (must contain `@`) |
 
 ```bash
-curl -X PATCH http://localhost:8080/api/api/auth/account/email \
+curl -X PATCH http://localhost:8080/api/auth/account/email \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"currentPassword": "password123", "newEmail": "new@example.com"}'
@@ -216,7 +216,7 @@ curl -X PATCH http://localhost:8080/api/api/auth/account/email \
 
 ---
 
-#### `PATCH /api/api/auth/account/password`
+#### `PATCH /api/auth/account/password`
 
 Update the authenticated user's password.
 
@@ -228,7 +228,7 @@ Update the authenticated user's password.
 | `newPassword`     | string | Yes      | Minimum 6 characters     |
 
 ```bash
-curl -X PATCH http://localhost:8080/api/api/auth/account/password \
+curl -X PATCH http://localhost:8080/api/auth/account/password \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"currentPassword": "password123", "newPassword": "newPassword123"}'
@@ -259,14 +259,14 @@ curl -X PATCH http://localhost:8080/api/api/auth/account/password \
 
 All page endpoints require authentication (Bearer JWT).
 
-#### `GET /api/api/pages/sidebar`
+#### `GET /api/pages/sidebar`
 
 Fetch the full nested page tree for the authenticated user. This is the primary data source for the sidebar navigation.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/api/api/pages/sidebar \
+curl http://localhost:8080/api/pages/sidebar \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -310,7 +310,7 @@ Returns an empty array `[]` if the user has no pages.
 
 ---
 
-#### `GET /api/api/pages/search`
+#### `GET /api/pages/search`
 
 Search page titles for the authenticated user.
 
@@ -326,7 +326,7 @@ The backend limits results to 25 items per request.
 **Request:**
 
 ```bash
-curl "http://localhost:8080/api/api/pages/search?q=roadmap" \
+curl "http://localhost:8080/api/pages/search?q=roadmap" \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -355,7 +355,7 @@ curl "http://localhost:8080/api/api/pages/search?q=roadmap" \
 
 ---
 
-#### `POST /api/api/pages`
+#### `POST /api/pages`
 
 Create a new page.
 
@@ -368,13 +368,13 @@ Create a new page.
 
 ```bash
 # Create a root page
-curl -X POST http://localhost:8080/api/api/pages \
+curl -X POST http://localhost:8080/api/pages \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"title": "My New Page"}'
 
 # Create a child page
-curl -X POST http://localhost:8080/api/api/pages \
+curl -X POST http://localhost:8080/api/pages \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"parentId": "parent-uuid", "title": "Child Page"}'
@@ -409,7 +409,7 @@ curl -X POST http://localhost:8080/api/api/pages \
 
 ---
 
-#### `POST /api/api/pages/{id}/assets`
+#### `POST /api/pages/{id}/assets`
 
 Upload an image or file for a page using multipart form data. This is used by the editor slash menu for direct local uploads.
 
@@ -432,7 +432,7 @@ Upload an image or file for a page using multipart form data. This is used by th
 - Default max size: `10MB` (configurable via `MAX_UPLOAD_SIZE_BYTES`)
 
 ```bash
-curl -X POST http://localhost:8080/api/api/pages/page-uuid/assets \
+curl -X POST http://localhost:8080/api/pages/page-uuid/assets \
   -H "Authorization: Bearer <TOKEN>" \
   -F "kind=image" \
   -F "file=@./example.png"
@@ -480,14 +480,14 @@ curl http://localhost:8080/api/assets/user-uuid/page-uuid/1713209600000_xxxxxxxx
 
 ---
 
-#### `GET /api/api/pages/{id}`
+#### `GET /api/pages/{id}`
 
 Retrieve a single page with all its properties including content.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/api/api/pages/page-uuid \
+curl http://localhost:8080/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -528,7 +528,7 @@ curl http://localhost:8080/api/api/pages/page-uuid \
 
 ---
 
-#### `PATCH /api/api/pages/{id}`
+#### `PATCH /api/pages/{id}`
 
 Partially update a page's properties. Only include fields you want to change.
 
@@ -542,19 +542,19 @@ Partially update a page's properties. Only include fields you want to change.
 
 ```bash
 # Update title only
-curl -X PATCH http://localhost:8080/api/api/pages/page-uuid \
+curl -X PATCH http://localhost:8080/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"title": "Updated Title"}'
 
 # Update icon
-curl -X PATCH http://localhost:8080/api/api/pages/page-uuid \
+curl -X PATCH http://localhost:8080/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"icon": "🚀"}'
 
 # Update multiple fields
-curl -X PATCH http://localhost:8080/api/api/pages/page-uuid \
+curl -X PATCH http://localhost:8080/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"title": "New Title", "icon": "📋"}'
@@ -575,14 +575,14 @@ curl -X PATCH http://localhost:8080/api/api/pages/page-uuid \
 
 ---
 
-#### `DELETE /api/api/pages/{id}`
+#### `DELETE /api/pages/{id}`
 
 Move a page and all its descendant pages to Trash (soft delete). This sets `deleted_at` and hides the page from all active GET endpoints.
 
 **Request:**
 
 ```bash
-curl -X DELETE http://localhost:8080/api/api/pages/page-uuid \
+curl -X DELETE http://localhost:8080/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -605,14 +605,14 @@ curl -X DELETE http://localhost:8080/api/api/pages/page-uuid \
 
 ---
 
-#### `GET /api/api/pages/trash`
+#### `GET /api/pages/trash`
 
 Fetch all trashed pages for the authenticated user.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/api/api/pages/trash \
+curl http://localhost:8080/api/pages/trash \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -641,14 +641,14 @@ curl http://localhost:8080/api/api/pages/trash \
 
 ---
 
-#### `PATCH /api/api/pages/{id}/restore`
+#### `PATCH /api/pages/{id}/restore`
 
 Restore a trashed page and its descendant pages back to the active tree.
 
 **Request:**
 
 ```bash
-curl -X PATCH http://localhost:8080/api/api/pages/page-uuid/restore \
+curl -X PATCH http://localhost:8080/api/pages/page-uuid/restore \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -671,14 +671,14 @@ curl -X PATCH http://localhost:8080/api/api/pages/page-uuid/restore \
 
 ---
 
-#### `DELETE /api/api/pages/{id}/permanent`
+#### `DELETE /api/pages/{id}/permanent`
 
 Permanently delete a trashed page and all descendants. This action is irreversible.
 
 **Request:**
 
 ```bash
-curl -X DELETE http://localhost:8080/api/api/pages/page-uuid/permanent \
+curl -X DELETE http://localhost:8080/api/pages/page-uuid/permanent \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -701,14 +701,14 @@ curl -X DELETE http://localhost:8080/api/api/pages/page-uuid/permanent \
 
 ---
 
-#### `PUT /api/api/pages/{id}/content`
+#### `PUT /api/pages/{id}/content`
 
 Save the full BlockNote editor content for a page. This is a dedicated endpoint for content-only updates, separate from the general `PATCH` endpoint.
 
 **Request Body:** A raw JSON array of BlockNote block objects.
 
 ```bash
-curl -X PUT http://localhost:8080/api/api/pages/page-uuid/content \
+curl -X PUT http://localhost:8080/api/pages/page-uuid/content \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '[
@@ -737,14 +737,14 @@ curl -X PUT http://localhost:8080/api/api/pages/page-uuid/content \
 
 ---
 
-#### `GET /api/api/pages/{id}/content`
+#### `GET /api/pages/{id}/content`
 
 Retrieve only the content field for a page. This is a lightweight endpoint used by the editor to fetch content without loading all page metadata.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/api/api/pages/page-uuid/content \
+curl http://localhost:8080/api/pages/page-uuid/content \
   -H "Authorization: Bearer <TOKEN>"
 ```
 

@@ -168,18 +168,18 @@ func TestCreatePage_Success(t *testing.T) {
 
 | Test                             | Endpoint          | Status | Description              |
 | -------------------------------- | ----------------- | ------ | ------------------------ |
-| `TestSignup_Success`             | POST /api/api/auth/signup | 201    | Valid signup             |
-| `TestSignup_EmptyEmail`          | POST /api/api/auth/signup | 400    | Empty email rejected     |
-| `TestSignup_EmptyPassword`       | POST /api/api/auth/signup | 400    | Empty password rejected  |
-| `TestSignup_ShortPassword`       | POST /api/api/auth/signup | 400    | Password < 6 chars       |
-| `TestSignup_InvalidEmailFormat`  | POST /api/api/auth/signup | 400    | Email without `@`        |
-| `TestSignup_DuplicateEmail`      | POST /api/api/auth/signup | 409    | Duplicate email conflict |
-| `TestSignup_InvalidJSON`         | POST /api/api/auth/signup | 400    | Malformed JSON body      |
-| `TestLogin_Success`              | POST /api/api/auth/login  | 200    | Valid login              |
-| `TestLogin_EmptyCredentials`     | POST /api/api/auth/login  | 400    | Empty credentials        |
-| `TestLogin_InvalidCredentials`   | POST /api/api/auth/login  | 401    | Wrong password           |
-| `TestLogin_InvalidJSON`          | POST /api/api/auth/login  | 400    | Malformed JSON body      |
-| `TestLogin_ServiceInternalError` | POST /api/api/auth/login  | 500    | Database error handling  |
+| `TestSignup_Success`             | POST /api/auth/signup | 201    | Valid signup             |
+| `TestSignup_EmptyEmail`          | POST /api/auth/signup | 400    | Empty email rejected     |
+| `TestSignup_EmptyPassword`       | POST /api/auth/signup | 400    | Empty password rejected  |
+| `TestSignup_ShortPassword`       | POST /api/auth/signup | 400    | Password < 6 chars       |
+| `TestSignup_InvalidEmailFormat`  | POST /api/auth/signup | 400    | Email without `@`        |
+| `TestSignup_DuplicateEmail`      | POST /api/auth/signup | 409    | Duplicate email conflict |
+| `TestSignup_InvalidJSON`         | POST /api/auth/signup | 400    | Malformed JSON body      |
+| `TestLogin_Success`              | POST /api/auth/login  | 200    | Valid login              |
+| `TestLogin_EmptyCredentials`     | POST /api/auth/login  | 400    | Empty credentials        |
+| `TestLogin_InvalidCredentials`   | POST /api/auth/login  | 401    | Wrong password           |
+| `TestLogin_InvalidJSON`          | POST /api/auth/login  | 400    | Malformed JSON body      |
+| `TestLogin_ServiceInternalError` | POST /api/auth/login  | 500    | Database error handling  |
 
 #### `page_handler_test.go` — Page Endpoints (23 tests)
 
@@ -314,14 +314,14 @@ Tests the typed page API wrapper functions:
 
 | Test               | API Call           | Validates                 |
 | ------------------ | ------------------ | ------------------------- |
-| `fetchSidebarTree` | GET /api/api/pages/sidebar | Correct path              |
-| Create root page   | POST /api/api/pages        | No parentId               |
-| Create child page  | POST /api/api/pages        | With parentId             |
-| Default title      | POST /api/api/pages        | `"Untitled"` fallback     |
-| Fetch page by id   | GET /api/api/pages/:id     | Correct path construction |
-| PATCH with title   | PATCH /api/api/pages/:id   | Title field only          |
-| PATCH with icon    | PATCH /api/api/pages/:id   | Icon field only           |
-| DELETE page        | DELETE /api/api/pages/:id  | Returns `{success: true}` |
+| `fetchSidebarTree` | GET /api/pages/sidebar | Correct path              |
+| Create root page   | POST /api/pages        | No parentId               |
+| Create child page  | POST /api/pages        | With parentId             |
+| Default title      | POST /api/pages        | `"Untitled"` fallback     |
+| Fetch page by id   | GET /api/pages/:id     | Correct path construction |
+| PATCH with title   | PATCH /api/pages/:id   | Title field only          |
+| PATCH with icon    | PATCH /api/pages/:id   | Icon field only           |
+| DELETE page        | DELETE /api/pages/:id  | Returns `{success: true}` |
 
 #### `auth-api.test.ts` — Account API Functions
 
