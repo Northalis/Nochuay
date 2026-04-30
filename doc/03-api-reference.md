@@ -45,7 +45,7 @@ Protected endpoints require a JWT token in the `Authorization` header:
 Authorization: Bearer <JWT_TOKEN>
 ```
 
-Tokens are obtained via the `/auth/signup` or `/auth/login` endpoints and are valid for **72 hours**. The JWT uses HS256 signing with the `JWT_SECRET` environment variable.
+Tokens are obtained via the `/api/auth/signup` or `/api/auth/login` endpoints and are valid for **72 hours**. The JWT uses HS256 signing with the `JWT_SECRET` environment variable.
 
 **Token claims:**
 
@@ -61,14 +61,14 @@ Tokens are obtained via the `/auth/signup` or `/auth/login` endpoints and are va
 
 ### Health Check
 
-#### `GET /health`
+#### `GET /api/health`
 
 Public endpoint to verify the API is running.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8080/api/health
 ```
 
 **Response (200 OK):**
@@ -84,7 +84,7 @@ curl http://localhost:8080/health
 
 ### Authentication
 
-#### `POST /auth/signup`
+#### `POST /api/api/auth/signup`
 
 Register a new user account.
 
@@ -96,7 +96,7 @@ Register a new user account.
 | `password` | string | Yes      | Minimum 6 characters |
 
 ```bash
-curl -X POST http://localhost:8080/auth/signup \
+curl -X POST http://localhost:8080/api/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "securepass"}'
 ```
@@ -129,7 +129,7 @@ curl -X POST http://localhost:8080/auth/signup \
 
 ---
 
-#### `POST /auth/login`
+#### `POST /api/api/auth/login`
 
 Authenticate an existing user.
 
@@ -141,7 +141,7 @@ Authenticate an existing user.
 | `password` | string | Yes      |
 
 ```bash
-curl -X POST http://localhost:8080/auth/login \
+curl -X POST http://localhost:8080/api/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "securepass"}'
 ```
@@ -172,7 +172,7 @@ curl -X POST http://localhost:8080/auth/login \
 
 ---
 
-#### `PATCH /auth/account/email`
+#### `PATCH /api/api/auth/account/email`
 
 Update the authenticated user's email address.
 
@@ -184,7 +184,7 @@ Update the authenticated user's email address.
 | `newEmail`        | string | Yes      | New email address (must contain `@`) |
 
 ```bash
-curl -X PATCH http://localhost:8080/auth/account/email \
+curl -X PATCH http://localhost:8080/api/api/auth/account/email \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"currentPassword": "password123", "newEmail": "new@example.com"}'
@@ -216,7 +216,7 @@ curl -X PATCH http://localhost:8080/auth/account/email \
 
 ---
 
-#### `PATCH /auth/account/password`
+#### `PATCH /api/api/auth/account/password`
 
 Update the authenticated user's password.
 
@@ -228,7 +228,7 @@ Update the authenticated user's password.
 | `newPassword`     | string | Yes      | Minimum 6 characters     |
 
 ```bash
-curl -X PATCH http://localhost:8080/auth/account/password \
+curl -X PATCH http://localhost:8080/api/api/auth/account/password \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"currentPassword": "password123", "newPassword": "newPassword123"}'
@@ -259,14 +259,14 @@ curl -X PATCH http://localhost:8080/auth/account/password \
 
 All page endpoints require authentication (Bearer JWT).
 
-#### `GET /pages/sidebar`
+#### `GET /api/api/pages/sidebar`
 
 Fetch the full nested page tree for the authenticated user. This is the primary data source for the sidebar navigation.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/pages/sidebar \
+curl http://localhost:8080/api/api/pages/sidebar \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -310,7 +310,7 @@ Returns an empty array `[]` if the user has no pages.
 
 ---
 
-#### `GET /pages/search`
+#### `GET /api/api/pages/search`
 
 Search page titles for the authenticated user.
 
@@ -326,7 +326,7 @@ The backend limits results to 25 items per request.
 **Request:**
 
 ```bash
-curl "http://localhost:8080/pages/search?q=roadmap" \
+curl "http://localhost:8080/api/api/pages/search?q=roadmap" \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -355,7 +355,7 @@ curl "http://localhost:8080/pages/search?q=roadmap" \
 
 ---
 
-#### `POST /pages`
+#### `POST /api/api/pages`
 
 Create a new page.
 
@@ -368,13 +368,13 @@ Create a new page.
 
 ```bash
 # Create a root page
-curl -X POST http://localhost:8080/pages \
+curl -X POST http://localhost:8080/api/api/pages \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"title": "My New Page"}'
 
 # Create a child page
-curl -X POST http://localhost:8080/pages \
+curl -X POST http://localhost:8080/api/api/pages \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"parentId": "parent-uuid", "title": "Child Page"}'
@@ -409,7 +409,7 @@ curl -X POST http://localhost:8080/pages \
 
 ---
 
-#### `POST /pages/{id}/assets`
+#### `POST /api/api/pages/{id}/assets`
 
 Upload an image or file for a page using multipart form data. This is used by the editor slash menu for direct local uploads.
 
@@ -432,7 +432,7 @@ Upload an image or file for a page using multipart form data. This is used by th
 - Default max size: `10MB` (configurable via `MAX_UPLOAD_SIZE_BYTES`)
 
 ```bash
-curl -X POST http://localhost:8080/pages/page-uuid/assets \
+curl -X POST http://localhost:8080/api/api/pages/page-uuid/assets \
   -H "Authorization: Bearer <TOKEN>" \
   -F "kind=image" \
   -F "file=@./example.png"
@@ -466,28 +466,28 @@ curl -X POST http://localhost:8080/pages/page-uuid/assets \
 
 ---
 
-#### `GET /assets/{userID}/{pageID}/{filename}`
+#### `GET /api/assets/{userID}/{pageID}/{filename}`
 
 Retrieve previously uploaded assets. Returned URLs are intentionally opaque and can be embedded directly in editor blocks.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/assets/user-uuid/page-uuid/1713209600000_xxxxxxxx.png
+curl http://localhost:8080/api/assets/user-uuid/page-uuid/1713209600000_xxxxxxxx.png
 ```
 
 **Response (200 OK):** Raw file bytes with content type inferred by file server.
 
 ---
 
-#### `GET /pages/{id}`
+#### `GET /api/api/pages/{id}`
 
 Retrieve a single page with all its properties including content.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/pages/page-uuid \
+curl http://localhost:8080/api/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -528,7 +528,7 @@ curl http://localhost:8080/pages/page-uuid \
 
 ---
 
-#### `PATCH /pages/{id}`
+#### `PATCH /api/api/pages/{id}`
 
 Partially update a page's properties. Only include fields you want to change.
 
@@ -542,19 +542,19 @@ Partially update a page's properties. Only include fields you want to change.
 
 ```bash
 # Update title only
-curl -X PATCH http://localhost:8080/pages/page-uuid \
+curl -X PATCH http://localhost:8080/api/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"title": "Updated Title"}'
 
 # Update icon
-curl -X PATCH http://localhost:8080/pages/page-uuid \
+curl -X PATCH http://localhost:8080/api/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"icon": "🚀"}'
 
 # Update multiple fields
-curl -X PATCH http://localhost:8080/pages/page-uuid \
+curl -X PATCH http://localhost:8080/api/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"title": "New Title", "icon": "📋"}'
@@ -575,14 +575,14 @@ curl -X PATCH http://localhost:8080/pages/page-uuid \
 
 ---
 
-#### `DELETE /pages/{id}`
+#### `DELETE /api/api/pages/{id}`
 
 Move a page and all its descendant pages to Trash (soft delete). This sets `deleted_at` and hides the page from all active GET endpoints.
 
 **Request:**
 
 ```bash
-curl -X DELETE http://localhost:8080/pages/page-uuid \
+curl -X DELETE http://localhost:8080/api/api/pages/page-uuid \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -605,14 +605,14 @@ curl -X DELETE http://localhost:8080/pages/page-uuid \
 
 ---
 
-#### `GET /pages/trash`
+#### `GET /api/api/pages/trash`
 
 Fetch all trashed pages for the authenticated user.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/pages/trash \
+curl http://localhost:8080/api/api/pages/trash \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -641,14 +641,14 @@ curl http://localhost:8080/pages/trash \
 
 ---
 
-#### `PATCH /pages/{id}/restore`
+#### `PATCH /api/api/pages/{id}/restore`
 
 Restore a trashed page and its descendant pages back to the active tree.
 
 **Request:**
 
 ```bash
-curl -X PATCH http://localhost:8080/pages/page-uuid/restore \
+curl -X PATCH http://localhost:8080/api/api/pages/page-uuid/restore \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -671,14 +671,14 @@ curl -X PATCH http://localhost:8080/pages/page-uuid/restore \
 
 ---
 
-#### `DELETE /pages/{id}/permanent`
+#### `DELETE /api/api/pages/{id}/permanent`
 
 Permanently delete a trashed page and all descendants. This action is irreversible.
 
 **Request:**
 
 ```bash
-curl -X DELETE http://localhost:8080/pages/page-uuid/permanent \
+curl -X DELETE http://localhost:8080/api/api/pages/page-uuid/permanent \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -701,14 +701,14 @@ curl -X DELETE http://localhost:8080/pages/page-uuid/permanent \
 
 ---
 
-#### `PUT /pages/{id}/content`
+#### `PUT /api/api/pages/{id}/content`
 
 Save the full BlockNote editor content for a page. This is a dedicated endpoint for content-only updates, separate from the general `PATCH` endpoint.
 
 **Request Body:** A raw JSON array of BlockNote block objects.
 
 ```bash
-curl -X PUT http://localhost:8080/pages/page-uuid/content \
+curl -X PUT http://localhost:8080/api/api/pages/page-uuid/content \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '[
@@ -737,14 +737,14 @@ curl -X PUT http://localhost:8080/pages/page-uuid/content \
 
 ---
 
-#### `GET /pages/{id}/content`
+#### `GET /api/api/pages/{id}/content`
 
 Retrieve only the content field for a page. This is a lightweight endpoint used by the editor to fetch content without loading all page metadata.
 
 **Request:**
 
 ```bash
-curl http://localhost:8080/pages/page-uuid/content \
+curl http://localhost:8080/api/api/pages/page-uuid/content \
   -H "Authorization: Bearer <TOKEN>"
 ```
 

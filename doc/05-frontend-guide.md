@@ -87,8 +87,8 @@ Next.js route groups (parenthesized folders) organize pages without affecting UR
 
 | Route             | Component       | Description                                       |
 | ----------------- | --------------- | ------------------------------------------------- |
-| `/login`          | `LoginPage`     | Email/password form → `POST /auth/login`          |
-| `/register`       | `RegisterPage`  | Email/password/confirm form → `POST /auth/signup` |
+| `/login`          | `LoginPage`     | Email/password form → `POST /api/api/auth/login`          |
+| `/register`       | `RegisterPage`  | Email/password/confirm form → `POST /api/api/auth/signup` |
 | `/`               | `DashboardPage` | Welcome message, prompts to select/create page    |
 | `/documents/[id]` | `DocumentPage`  | Loads page data, renders BlockNote editor         |
 
@@ -153,14 +153,14 @@ Server data (page tree, page details) is managed through TanStack Query hooks in
 
 | Hook                       | Type     | Query Key                               | API Call                      |
 | -------------------------- | -------- | --------------------------------------- | ----------------------------- |
-| `useSidebarTree`           | Query    | `pageKeys.sidebar.byUser(userID)`       | `GET /pages/sidebar`          |
-| `usePageSearch`            | Query    | `pageKeys.search.byUser(userID, query)` | `GET /pages/search?q=...`     |
-| `useTrashPages`            | Query    | `pageKeys.trash.byUser(userID)`         | `GET /pages/trash`            |
-| `useCreatePage`            | Mutation | —                                       | `POST /pages`                 |
-| `useUpdatePage`            | Mutation | —                                       | `PATCH /pages/:id`            |
-| `useDeletePage`            | Mutation | —                                       | `DELETE /pages/:id`           |
-| `useRestorePage`           | Mutation | —                                       | `PATCH /pages/:id/restore`    |
-| `useDeletePagePermanently` | Mutation | —                                       | `DELETE /pages/:id/permanent` |
+| `useSidebarTree`           | Query    | `pageKeys.sidebar.byUser(userID)`       | `GET /api/api/pages/sidebar`          |
+| `usePageSearch`            | Query    | `pageKeys.search.byUser(userID, query)` | `GET /api/api/pages/search?q=...`     |
+| `useTrashPages`            | Query    | `pageKeys.trash.byUser(userID)`         | `GET /api/api/pages/trash`            |
+| `useCreatePage`            | Mutation | —                                       | `POST /api/api/pages`                 |
+| `useUpdatePage`            | Mutation | —                                       | `PATCH /api/api/pages/:id`            |
+| `useDeletePage`            | Mutation | —                                       | `DELETE /api/api/pages/:id`           |
+| `useRestorePage`           | Mutation | —                                       | `PATCH /api/api/pages/:id/restore`    |
+| `useDeletePagePermanently` | Mutation | —                                       | `DELETE /api/api/pages/:id/permanent` |
 
 All mutations invalidate `pageKeys.sidebar.all` plus related search/detail/trash keys to keep caches in sync.
 
@@ -187,7 +187,7 @@ useQuery({
 Generic fetch wrapper that handles authentication and response unwrapping.
 
 ```typescript
-const data = await apiFetch<Page>("/pages/some-uuid");
+const data = await apiFetch<Page>("/api/pages/some-uuid");
 ```
 
 **Behavior:**
@@ -208,16 +208,16 @@ Typed wrapper functions for page-related API calls:
 
 | Function                    | Method | Endpoint               | Parameters                    |
 | --------------------------- | ------ | ---------------------- | ----------------------------- |
-| `fetchSidebarTree()`        | GET    | `/pages/sidebar`       | None                          |
-| `searchPages(query)`        | GET    | `/pages/search`        | `query: string`               |
-| `fetchTrashPages()`         | GET    | `/pages/trash`         | None                          |
-| `createPage(body)`          | POST   | `/pages`               | `{ parentId?, title? }`       |
-| `getPage(id)`               | GET    | `/pages/:id`           | Page UUID                     |
-| `updatePage(id, body)`      | PATCH  | `/pages/:id`           | `{ title?, icon?, content? }` |
-| `deletePage(id)`            | DELETE | `/pages/:id`           | Page UUID                     |
-| `restorePage(id)`           | PATCH  | `/pages/:id/restore`   | Page UUID                     |
-| `deletePagePermanently(id)` | DELETE | `/pages/:id/permanent` | Page UUID                     |
-| `uploadPageAsset()`         | POST   | `/pages/:id/assets`    | `(id, kind, file)`            |
+| `fetchSidebarTree()`        | GET    | `/api/pages/sidebar`       | None                          |
+| `searchPages(query)`        | GET    | `/api/pages/search`        | `query: string`               |
+| `fetchTrashPages()`         | GET    | `/api/pages/trash`         | None                          |
+| `createPage(body)`          | POST   | `/api/pages`               | `{ parentId?, title? }`       |
+| `getPage(id)`               | GET    | `/api/pages/:id`           | Page UUID                     |
+| `updatePage(id, body)`      | PATCH  | `/api/pages/:id`           | `{ title?, icon?, content? }` |
+| `deletePage(id)`            | DELETE | `/api/pages/:id`           | Page UUID                     |
+| `restorePage(id)`           | PATCH  | `/api/pages/:id/restore`   | Page UUID                     |
+| `deletePagePermanently(id)` | DELETE | `/api/pages/:id/permanent` | Page UUID                     |
+| `uploadPageAsset()`         | POST   | `/api/pages/:id/assets`    | `(id, kind, file)`            |
 
 ### Account API Functions (`lib/auth-api.ts`)
 
@@ -225,8 +225,8 @@ Helpers for account update endpoints:
 
 | Function                  | Method | Endpoint                 | Parameters                         |
 | ------------------------- | ------ | ------------------------ | ---------------------------------- |
-| `updateAccountEmail()`    | PATCH  | `/auth/account/email`    | `{ currentPassword, newEmail }`    |
-| `updateAccountPassword()` | PATCH  | `/auth/account/password` | `{ currentPassword, newPassword }` |
+| `updateAccountEmail()`    | PATCH  | `/api/auth/account/email`    | `{ currentPassword, newEmail }`    |
+| `updateAccountPassword()` | PATCH  | `/api/auth/account/password` | `{ currentPassword, newPassword }` |
 
 `hooks/use-account.ts` wraps these helpers and updates the stored email after a successful change.
 
@@ -348,7 +348,7 @@ The rich text editor wrapper component. Dynamically imported (no SSR) to avoid B
 
 **Features:**
 
-- **Auto-save:** Changes are debounced by 1 second, then sent via `PATCH /pages/:id`
+- **Auto-save:** Changes are debounced by 1 second, then sent via `PATCH /api/api/pages/:id`
 - **Custom schema:** Extends default BlockNote blocks with a custom `page` block type
 - **Direct uploads via slash menu:** `/image` and `/file` now open local file picker and upload to backend, then insert returned URL
 - **Slash menu:** Adds a "Page" command that creates a child page and inserts a page block
@@ -390,7 +390,7 @@ Renders nothing until hydration completes, preventing flash of protected content
        │
 2. Fills form → submits
        │
-3. apiFetch("POST /auth/login") or apiFetch("POST /auth/signup")
+3. apiFetch("POST /api/api/auth/login") or apiFetch("POST /api/api/auth/signup")
        │
 4. On success:
    ├── useUserStore.setAuth(token, user)
@@ -477,7 +477,7 @@ const saveContent = useCallback(
   (blocks) => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(async () => {
-      await apiFetch(`/pages/${pageId}`, {
+      await apiFetch(`/api/pages/${pageId}`, {
         method: "PATCH",
         body: JSON.stringify({ content: JSON.stringify(blocks) }),
       });

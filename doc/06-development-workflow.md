@@ -42,7 +42,7 @@ This starts four services:
 | -------- | ---------------------------- | ------------------- |
 | Frontend | http://localhost:3000        | Web application     |
 | Backend  | http://localhost:8080        | REST API            |
-| Health   | http://localhost:8080/health | API health check    |
+| Health   | http://localhost:8080/api/health | API health check    |
 | Database | localhost:5432               | PostgreSQL (direct) |
 
 ### Viewing Logs
@@ -123,7 +123,7 @@ npm run dev
 Ensure `nochuay-front/.env.local` has:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
 ---
@@ -191,15 +191,15 @@ Follow the layered architecture (Repository → Service → Handler):
 
 ```bash
 # Health check
-curl http://localhost:8080/health
+curl http://localhost:8080/api/health
 
 # Login and capture token
-TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123"}' | jq -r '.data.token')
 
 # Use token for authenticated requests
-curl http://localhost:8080/pages/sidebar \
+curl http://localhost:8080/api/api/pages/sidebar \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 

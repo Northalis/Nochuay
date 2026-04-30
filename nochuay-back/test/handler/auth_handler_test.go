@@ -45,7 +45,7 @@ func TestSignup_Success(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"test@example.com","password":"password123"}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/signup", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -74,7 +74,7 @@ func TestSignup_EmptyEmail(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"","password":"password123"}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/signup", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -98,7 +98,7 @@ func TestSignup_EmptyPassword(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"test@example.com","password":""}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/signup", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -114,7 +114,7 @@ func TestSignup_ShortPassword(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"test@example.com","password":"abc"}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/signup", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -135,7 +135,7 @@ func TestSignup_InvalidEmailFormat(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"not-an-email","password":"password123"}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/signup", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -160,7 +160,7 @@ func TestSignup_DuplicateEmail(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"existing@example.com","password":"password123"}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/signup", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -175,7 +175,7 @@ func TestSignup_InvalidJSON(t *testing.T) {
 	mock := &MockAuthService{}
 	h := handler.NewAuthHandler(mock)
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/signup", bytes.NewBufferString(`{invalid`))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", bytes.NewBufferString(`{invalid`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -203,7 +203,7 @@ func TestLogin_Success(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"test@example.com","password":"password123"}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -232,7 +232,7 @@ func TestLogin_EmptyCredentials(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"","password":""}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -252,7 +252,7 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"test@example.com","password":"wrongpassword"}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -267,7 +267,7 @@ func TestLogin_InvalidJSON(t *testing.T) {
 	mock := &MockAuthService{}
 	h := handler.NewAuthHandler(mock)
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewBufferString(`not-json`))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(`not-json`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -287,7 +287,7 @@ func TestLogin_ServiceInternalError(t *testing.T) {
 	h := handler.NewAuthHandler(mock)
 
 	reqBody := `{"email":"test@example.com","password":"password123"}`
-	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -325,7 +325,7 @@ func TestUpdateAccountEmail_Success(t *testing.T) {
 	}
 
 	h := handler.NewAuthHandler(mock)
-	req := httptest.NewRequest(http.MethodPatch, "/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"new@example.com"}`))
+	req := httptest.NewRequest(http.MethodPatch, "/api/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"new@example.com"}`))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, userID)
 
@@ -341,7 +341,7 @@ func TestUpdateAccountEmail_Unauthorized(t *testing.T) {
 	mock := &MockAuthService{}
 	h := handler.NewAuthHandler(mock)
 
-	req := httptest.NewRequest(http.MethodPatch, "/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"new@example.com"}`))
+	req := httptest.NewRequest(http.MethodPatch, "/api/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"new@example.com"}`))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
@@ -360,7 +360,7 @@ func TestUpdateAccountEmail_Conflict(t *testing.T) {
 	}
 
 	h := handler.NewAuthHandler(mock)
-	req := httptest.NewRequest(http.MethodPatch, "/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"existing@example.com"}`))
+	req := httptest.NewRequest(http.MethodPatch, "/api/auth/account/email", bytes.NewBufferString(`{"currentPassword":"password123","newEmail":"existing@example.com"}`))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, uuid.New())
 
@@ -380,7 +380,7 @@ func TestUpdateAccountEmail_InvalidCurrentPassword(t *testing.T) {
 	}
 
 	h := handler.NewAuthHandler(mock)
-	req := httptest.NewRequest(http.MethodPatch, "/auth/account/email", bytes.NewBufferString(`{"currentPassword":"wrong","newEmail":"new@example.com"}`))
+	req := httptest.NewRequest(http.MethodPatch, "/api/auth/account/email", bytes.NewBufferString(`{"currentPassword":"wrong","newEmail":"new@example.com"}`))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, uuid.New())
 
@@ -414,7 +414,7 @@ func TestUpdateAccountPassword_Success(t *testing.T) {
 	}
 
 	h := handler.NewAuthHandler(mock)
-	req := httptest.NewRequest(http.MethodPatch, "/auth/account/password", bytes.NewBufferString(`{"currentPassword":"password123","newPassword":"newPassword123"}`))
+	req := httptest.NewRequest(http.MethodPatch, "/api/auth/account/password", bytes.NewBufferString(`{"currentPassword":"password123","newPassword":"newPassword123"}`))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, userID)
 
@@ -434,7 +434,7 @@ func TestUpdateAccountPassword_InvalidCurrentPassword(t *testing.T) {
 	}
 
 	h := handler.NewAuthHandler(mock)
-	req := httptest.NewRequest(http.MethodPatch, "/auth/account/password", bytes.NewBufferString(`{"currentPassword":"wrong","newPassword":"newPassword123"}`))
+	req := httptest.NewRequest(http.MethodPatch, "/api/auth/account/password", bytes.NewBufferString(`{"currentPassword":"wrong","newPassword":"newPassword123"}`))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, uuid.New())
 
@@ -450,7 +450,7 @@ func TestUpdateAccountPassword_Validation(t *testing.T) {
 	mock := &MockAuthService{}
 	h := handler.NewAuthHandler(mock)
 
-	req := httptest.NewRequest(http.MethodPatch, "/auth/account/password", bytes.NewBufferString(`{"currentPassword":"123","newPassword":"abc"}`))
+	req := httptest.NewRequest(http.MethodPatch, "/api/auth/account/password", bytes.NewBufferString(`{"currentPassword":"123","newPassword":"abc"}`))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, uuid.New())
 

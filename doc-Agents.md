@@ -137,8 +137,8 @@ nochuay-front/
 │   ├── layout.tsx                    # Root HTML shell, Geist fonts, metadata
 │   ├── globals.css                   # Global Tailwind styles
 │   ├── (auth)/
-│   │   ├── login/page.tsx            # Login form → POST /auth/login → setAuth → redirect /
-│   │   └── register/page.tsx         # Register form → POST /auth/signup → setAuth → redirect
+│   │   ├── login/page.tsx            # Login form → POST /api/api/auth/login → setAuth → redirect /
+│   │   └── register/page.tsx         # Register form → POST /api/api/auth/signup → setAuth → redirect
 │   └── (main)/
 │       ├── layout.tsx                # Client layout: collapsible sidebar + content area
 │       ├── page.tsx                  # Dashboard landing: "Select a page or create one"
@@ -182,22 +182,22 @@ All responses follow: `{ "data": <Payload>, "error": null }`
 | Method | Path                  | Auth      | Handler                   | Description                          |
 | ------ | --------------------- | --------- | ------------------------- | ------------------------------------ |
 | GET    | `/health`             | Public    | inline                    | Health check → `{status: "ok"}`      |
-| POST   | `/auth/signup`        | Public    | `AuthHandler.Signup`      | Register user → `{token, user}`      |
-| POST   | `/auth/login`         | Public    | `AuthHandler.Login`       | Login user → `{token, user}`         |
-| GET    | `/pages/sidebar`      | Protected | `PageHandler.GetSidebar`  | Nested page tree → `[PageNode...]`   |
-| POST   | `/pages`              | Protected | `PageHandler.CreatePage`  | Create page → `Page`                 |
-| GET    | `/pages/{id}`         | Protected | `PageHandler.GetPage`     | Get page details → `Page`            |
-| PATCH  | `/pages/{id}`         | Protected | `PageHandler.UpdatePage`  | Partial update → `Page`              |
-| DELETE | `/pages/{id}`         | Protected | `PageHandler.DeletePage`  | Move page to Trash → `{success}` |
-| GET    | `/pages/search`       | Protected | `PageHandler.SearchPages` | Search pages by title → `[PageSearchResult...]` |
-| GET    | `/pages/trash`        | Protected | `PageHandler.GetTrash`    | List trashed pages → `[PageTrashItem...]` |
-| PATCH  | `/pages/{id}/restore` | Protected | `PageHandler.RestorePage` | Restore subtree → `{success}` |
-| DELETE | `/pages/{id}/permanent` | Protected | `PageHandler.DeletePagePermanently` | Permanent delete → `{success}` |
-| PATCH  | `/auth/account/email` | Protected | `AuthHandler.UpdateAccountEmail` | Update email → `User` |
-| PATCH  | `/auth/account/password` | Protected | `AuthHandler.UpdateAccountPassword` | Update password → `{success}` |
-| POST   | `/pages/{id}/assets`  | Protected | `PageHandler.UploadAsset` | Upload asset → `{url, contentType, size, name}` |
-| PUT    | `/pages/{id}/content` | Protected | `PageHandler.SaveContent` | Save block content                   |
-| GET    | `/pages/{id}/content` | Protected | `PageHandler.GetContent`  | Get block content                    |
+| POST   | `/api/auth/signup`        | Public    | `AuthHandler.Signup`      | Register user → `{token, user}`      |
+| POST   | `/api/auth/login`         | Public    | `AuthHandler.Login`       | Login user → `{token, user}`         |
+| GET    | `/api/pages/sidebar`      | Protected | `PageHandler.GetSidebar`  | Nested page tree → `[PageNode...]`   |
+| POST   | `/api/pages`              | Protected | `PageHandler.CreatePage`  | Create page → `Page`                 |
+| GET    | `/api/pages/{id}`         | Protected | `PageHandler.GetPage`     | Get page details → `Page`            |
+| PATCH  | `/api/pages/{id}`         | Protected | `PageHandler.UpdatePage`  | Partial update → `Page`              |
+| DELETE | `/api/pages/{id}`         | Protected | `PageHandler.DeletePage`  | Move page to Trash → `{success}` |
+| GET    | `/api/pages/search`       | Protected | `PageHandler.SearchPages` | Search pages by title → `[PageSearchResult...]` |
+| GET    | `/api/pages/trash`        | Protected | `PageHandler.GetTrash`    | List trashed pages → `[PageTrashItem...]` |
+| PATCH  | `/api/pages/{id}/restore` | Protected | `PageHandler.RestorePage` | Restore subtree → `{success}` |
+| DELETE | `/api/pages/{id}/permanent` | Protected | `PageHandler.DeletePagePermanently` | Permanent delete → `{success}` |
+| PATCH  | `/api/auth/account/email` | Protected | `AuthHandler.UpdateAccountEmail` | Update email → `User` |
+| PATCH  | `/api/auth/account/password` | Protected | `AuthHandler.UpdateAccountPassword` | Update password → `{success}` |
+| POST   | `/api/pages/{id}/assets`  | Protected | `PageHandler.UploadAsset` | Upload asset → `{url, contentType, size, name}` |
+| PUT    | `/api/pages/{id}/content` | Protected | `PageHandler.SaveContent` | Save block content                   |
+| GET    | `/api/pages/{id}/content` | Protected | `PageHandler.GetContent`  | Get block content                    |
 
 ---
 
@@ -280,7 +280,7 @@ Run tests: `cd nochuay-back && go test -v ./...`
 
 ## Security Model
 
-1. **Authentication** — All `/pages/*` routes require `Authorization: Bearer <JWT>`. The `userID` is extracted from token claims, never from the request body.
+1. **Authentication** — All `/api/pages/*` routes require `Authorization: Bearer <JWT>`. The `userID` is extracted from token claims, never from the request body.
 2. **Authorization (Row-Level)** — Every page SQL query includes `WHERE user_id = $x` to prevent IDOR.
 3. **Input Validation** — UUID format validated before DB queries; content validated as JSON array before save.
 

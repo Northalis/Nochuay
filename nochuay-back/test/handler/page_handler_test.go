@@ -58,7 +58,7 @@ func TestCreatePage_Success(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	reqBody := `{"title":"My Page"}`
-	req := httptest.NewRequest(http.MethodPost, "/pages", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/pages", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, userID)
 
@@ -94,7 +94,7 @@ func TestCreatePage_WithParent(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	reqBody := fmt.Sprintf(`{"parentId":"%s","title":"Child Page"}`, parentID.String())
-	req := httptest.NewRequest(http.MethodPost, "/pages", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/pages", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, userID)
 
@@ -111,7 +111,7 @@ func TestCreatePage_Unauthorized(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	reqBody := `{"title":"Test"}`
-	req := httptest.NewRequest(http.MethodPost, "/pages", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/pages", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	// No userID injected
 
@@ -127,7 +127,7 @@ func TestCreatePage_InvalidJSON(t *testing.T) {
 	mock := &MockPageService{}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodPost, "/pages", bytes.NewBufferString(`{bad`))
+	req := httptest.NewRequest(http.MethodPost, "/api/pages", bytes.NewBufferString(`{bad`))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, uuid.New())
 
@@ -144,7 +144,7 @@ func TestCreatePage_InvalidParentID(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	reqBody := `{"parentId":"not-a-uuid","title":"Test"}`
-	req := httptest.NewRequest(http.MethodPost, "/pages", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/pages", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, uuid.New())
 
@@ -166,7 +166,7 @@ func TestCreatePage_ParentNotFound(t *testing.T) {
 
 	parentID := uuid.New()
 	reqBody := fmt.Sprintf(`{"parentId":"%s","title":"Orphan"}`, parentID.String())
-	req := httptest.NewRequest(http.MethodPost, "/pages", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPost, "/api/pages", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	req = injectUserID(req, uuid.New())
 
@@ -198,7 +198,7 @@ func TestGetPage_Success(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/"+pageID.String(), nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/"+pageID.String(), nil)
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)
 
@@ -219,7 +219,7 @@ func TestGetPage_NotFound(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	pageID := uuid.New()
-	req := httptest.NewRequest(http.MethodGet, "/pages/"+pageID.String(), nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/"+pageID.String(), nil)
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, uuid.New())
 
@@ -235,7 +235,7 @@ func TestGetPage_InvalidID(t *testing.T) {
 	mock := &MockPageService{}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/not-a-uuid", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/not-a-uuid", nil)
 	req.SetPathValue("id", "not-a-uuid")
 	req = injectUserID(req, uuid.New())
 
@@ -251,7 +251,7 @@ func TestGetPage_Unauthorized(t *testing.T) {
 	mock := &MockPageService{}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/"+uuid.New().String(), nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/"+uuid.New().String(), nil)
 	req.SetPathValue("id", uuid.New().String())
 
 	w := httptest.NewRecorder()
@@ -284,7 +284,7 @@ func TestUpdatePage_Success(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	reqBody := `{"title":"Updated Title"}`
-	req := httptest.NewRequest(http.MethodPatch, "/pages/"+pageID.String(), bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPatch, "/api/pages/"+pageID.String(), bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)
@@ -302,7 +302,7 @@ func TestUpdatePage_NoFields(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	reqBody := `{}`
-	req := httptest.NewRequest(http.MethodPatch, "/pages/"+uuid.New().String(), bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPatch, "/api/pages/"+uuid.New().String(), bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", uuid.New().String())
 	req = injectUserID(req, uuid.New())
@@ -325,7 +325,7 @@ func TestUpdatePage_NotFound(t *testing.T) {
 
 	reqBody := `{"title":"Updated"}`
 	pageID := uuid.New()
-	req := httptest.NewRequest(http.MethodPatch, "/pages/"+pageID.String(), bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPatch, "/api/pages/"+pageID.String(), bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, uuid.New())
@@ -349,7 +349,7 @@ func TestDeletePage_Success(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	pageID := uuid.New()
-	req := httptest.NewRequest(http.MethodDelete, "/pages/"+pageID.String(), nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/pages/"+pageID.String(), nil)
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, uuid.New())
 
@@ -370,7 +370,7 @@ func TestDeletePage_NotFound(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	pageID := uuid.New()
-	req := httptest.NewRequest(http.MethodDelete, "/pages/"+pageID.String(), nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/pages/"+pageID.String(), nil)
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, uuid.New())
 
@@ -386,7 +386,7 @@ func TestDeletePage_Unauthorized(t *testing.T) {
 	mock := &MockPageService{}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodDelete, "/pages/"+uuid.New().String(), nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/pages/"+uuid.New().String(), nil)
 	req.SetPathValue("id", uuid.New().String())
 
 	w := httptest.NewRecorder()
@@ -414,7 +414,7 @@ func TestGetTrash_Success(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/trash", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/trash", nil)
 	req = injectUserID(req, userID)
 
 	w := httptest.NewRecorder()
@@ -444,7 +444,7 @@ func TestRestorePage_Success(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodPatch, "/pages/"+pageID.String()+"/restore", nil)
+	req := httptest.NewRequest(http.MethodPatch, "/api/pages/"+pageID.String()+"/restore", nil)
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)
 
@@ -475,7 +475,7 @@ func TestDeletePagePermanently_Success(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodDelete, "/pages/"+pageID.String()+"/permanent", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/pages/"+pageID.String()+"/permanent", nil)
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)
 
@@ -510,7 +510,7 @@ func TestGetSidebar_Success(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/sidebar", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/sidebar", nil)
 	req = injectUserID(req, userID)
 
 	w := httptest.NewRecorder()
@@ -529,7 +529,7 @@ func TestGetSidebar_Empty(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/sidebar", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/sidebar", nil)
 	req = injectUserID(req, uuid.New())
 
 	w := httptest.NewRecorder()
@@ -544,7 +544,7 @@ func TestGetSidebar_Unauthorized(t *testing.T) {
 	mock := &MockPageService{}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/sidebar", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/sidebar", nil)
 
 	w := httptest.NewRecorder()
 	h.GetSidebar(w, req)
@@ -562,7 +562,7 @@ func TestGetSidebar_ServiceError(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/sidebar", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/sidebar", nil)
 	req = injectUserID(req, uuid.New())
 
 	w := httptest.NewRecorder()
@@ -598,7 +598,7 @@ func TestSearchPages_Success(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/search?q=road", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/search?q=road", nil)
 	req = injectUserID(req, userID)
 
 	w := httptest.NewRecorder()
@@ -628,7 +628,7 @@ func TestSearchPages_EmptyResults(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/search?q=missing", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/search?q=missing", nil)
 	req = injectUserID(req, userID)
 
 	w := httptest.NewRecorder()
@@ -655,7 +655,7 @@ func TestSearchPages_MissingQuery(t *testing.T) {
 	mock := &MockPageService{}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/search", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/search", nil)
 	req = injectUserID(req, uuid.New())
 
 	w := httptest.NewRecorder()
@@ -670,7 +670,7 @@ func TestSearchPages_Unauthorized(t *testing.T) {
 	mock := &MockPageService{}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/search?q=abc", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/search?q=abc", nil)
 
 	w := httptest.NewRecorder()
 	h.SearchPages(w, req)
@@ -688,7 +688,7 @@ func TestSearchPages_ServiceError(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/search?q=abc", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/search?q=abc", nil)
 	req = injectUserID(req, uuid.New())
 
 	w := httptest.NewRecorder()
@@ -720,7 +720,7 @@ func TestSaveContent_Success(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	reqBody := `[{"type":"paragraph","content":[{"type":"text","text":"Hello"}]}]`
-	req := httptest.NewRequest(http.MethodPut, "/pages/"+pageID.String()+"/content", bytes.NewBufferString(reqBody))
+	req := httptest.NewRequest(http.MethodPut, "/api/pages/"+pageID.String()+"/content", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)
@@ -738,7 +738,7 @@ func TestSaveContent_InvalidJSON(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	pageID := uuid.New()
-	req := httptest.NewRequest(http.MethodPut, "/pages/"+pageID.String()+"/content", bytes.NewBufferString(`{not valid`))
+	req := httptest.NewRequest(http.MethodPut, "/api/pages/"+pageID.String()+"/content", bytes.NewBufferString(`{not valid`))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, uuid.New())
@@ -764,7 +764,7 @@ func TestGetContent_Success(t *testing.T) {
 	}
 	h := handler.NewPageHandler(mock)
 
-	req := httptest.NewRequest(http.MethodGet, "/pages/"+pageID.String()+"/content", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/"+pageID.String()+"/content", nil)
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)
 
@@ -785,7 +785,7 @@ func TestGetContent_NotFound(t *testing.T) {
 	h := handler.NewPageHandler(mock)
 
 	pageID := uuid.New()
-	req := httptest.NewRequest(http.MethodGet, "/pages/"+pageID.String()+"/content", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/pages/"+pageID.String()+"/content", nil)
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, uuid.New())
 
@@ -826,7 +826,7 @@ func TestUploadAsset_SuccessImage(t *testing.T) {
 	_, _ = part.Write([]byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0x00, 0x00, 0x00, 0x0D})
 	_ = writer.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/pages/"+pageID.String()+"/assets", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/pages/"+pageID.String()+"/assets", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)
@@ -878,7 +878,7 @@ func TestUploadAsset_InvalidKind(t *testing.T) {
 	_ = writer.Close()
 
 	pageID := uuid.New()
-	req := httptest.NewRequest(http.MethodPost, "/pages/"+pageID.String()+"/assets", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/pages/"+pageID.String()+"/assets", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, uuid.New())
@@ -910,7 +910,7 @@ func TestUploadAsset_UnsupportedFileType(t *testing.T) {
 	_, _ = part.Write([]byte("MZ fake executable"))
 	_ = writer.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/pages/"+pageID.String()+"/assets", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/pages/"+pageID.String()+"/assets", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)
@@ -942,7 +942,7 @@ func TestUploadAsset_TooLarge(t *testing.T) {
 	_, _ = part.Write([]byte("this-is-over-10-bytes"))
 	_ = writer.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/pages/"+pageID.String()+"/assets", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/pages/"+pageID.String()+"/assets", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.SetPathValue("id", pageID.String())
 	req = injectUserID(req, userID)

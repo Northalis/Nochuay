@@ -49,32 +49,32 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Health check
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
 	// Auth routes (public)
-	mux.HandleFunc("POST /auth/signup", authHandler.Signup)
-	mux.HandleFunc("POST /auth/login", authHandler.Login)
-	mux.Handle("PATCH /auth/account/email", authMiddleware(http.HandlerFunc(authHandler.UpdateAccountEmail)))
-	mux.Handle("PATCH /auth/account/password", authMiddleware(http.HandlerFunc(authHandler.UpdateAccountPassword)))
+	mux.HandleFunc("POST /api/auth/signup", authHandler.Signup)
+	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+	mux.Handle("PATCH /api/auth/account/email", authMiddleware(http.HandlerFunc(authHandler.UpdateAccountEmail)))
+	mux.Handle("PATCH /api/auth/account/password", authMiddleware(http.HandlerFunc(authHandler.UpdateAccountPassword)))
 
 	// Page routes (protected)
-	mux.Handle("GET /pages/sidebar", authMiddleware(http.HandlerFunc(pageHandler.GetSidebar)))
-	mux.Handle("GET /pages/search", authMiddleware(http.HandlerFunc(pageHandler.SearchPages)))
-	mux.Handle("GET /pages/trash", authMiddleware(http.HandlerFunc(pageHandler.GetTrash)))
-	mux.Handle("POST /pages", authMiddleware(http.HandlerFunc(pageHandler.CreatePage)))
-	mux.Handle("GET /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.GetPage)))
-	mux.Handle("PATCH /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.UpdatePage)))
-	mux.Handle("DELETE /pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.DeletePage)))
-	mux.Handle("PATCH /pages/{id}/restore", authMiddleware(http.HandlerFunc(pageHandler.RestorePage)))
-	mux.Handle("DELETE /pages/{id}/permanent", authMiddleware(http.HandlerFunc(pageHandler.DeletePagePermanently)))
-	mux.Handle("PUT /pages/{id}/content", authMiddleware(http.HandlerFunc(pageHandler.SaveContent)))
-	mux.Handle("GET /pages/{id}/content", authMiddleware(http.HandlerFunc(pageHandler.GetContent)))
-	mux.Handle("POST /pages/{id}/assets", authMiddleware(http.HandlerFunc(pageHandler.UploadAsset)))
+	mux.Handle("GET /api/pages/sidebar", authMiddleware(http.HandlerFunc(pageHandler.GetSidebar)))
+	mux.Handle("GET /api/pages/search", authMiddleware(http.HandlerFunc(pageHandler.SearchPages)))
+	mux.Handle("GET /api/pages/trash", authMiddleware(http.HandlerFunc(pageHandler.GetTrash)))
+	mux.Handle("POST /api/pages", authMiddleware(http.HandlerFunc(pageHandler.CreatePage)))
+	mux.Handle("GET /api/pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.GetPage)))
+	mux.Handle("PATCH /api/pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.UpdatePage)))
+	mux.Handle("DELETE /api/pages/{id}", authMiddleware(http.HandlerFunc(pageHandler.DeletePage)))
+	mux.Handle("PATCH /api/pages/{id}/restore", authMiddleware(http.HandlerFunc(pageHandler.RestorePage)))
+	mux.Handle("DELETE /api/pages/{id}/permanent", authMiddleware(http.HandlerFunc(pageHandler.DeletePagePermanently)))
+	mux.Handle("PUT /api/pages/{id}/content", authMiddleware(http.HandlerFunc(pageHandler.SaveContent)))
+	mux.Handle("GET /api/pages/{id}/content", authMiddleware(http.HandlerFunc(pageHandler.GetContent)))
+	mux.Handle("POST /api/pages/{id}/assets", authMiddleware(http.HandlerFunc(pageHandler.UploadAsset)))
 
 	// Uploaded assets are served via opaque URLs to support inline rendering in the editor.
-	mux.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(cfg.UploadDir))))
+	mux.Handle("GET /api/assets/", http.StripPrefix("/api/assets/", http.FileServer(http.Dir(cfg.UploadDir))))
 
 	// 5. CORS middleware
 	corsHandler := corsMiddleware(mux, cfg.CORSAllowedOrigins)

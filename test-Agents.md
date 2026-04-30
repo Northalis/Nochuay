@@ -120,8 +120,8 @@ nochuay-front/
 │   ├── layout.tsx                    # Root HTML shell, Geist fonts, metadata
 │   ├── globals.css                   # Global Tailwind styles
 │   ├── (auth)/
-│   │   ├── login/page.tsx            # Login form → POST /auth/login → setAuth → redirect /
-│   │   └── register/page.tsx         # Register form → POST /auth/signup → setAuth → redirect
+│   │   ├── login/page.tsx            # Login form → POST /api/api/auth/login → setAuth → redirect /
+│   │   └── register/page.tsx         # Register form → POST /api/api/auth/signup → setAuth → redirect
 │   └── (main)/
 │       ├── layout.tsx                # Client layout: collapsible sidebar + content area
 │       ├── page.tsx                  # Dashboard landing: "Select a page or create one"
@@ -158,22 +158,22 @@ All responses follow: `{ "data": <Payload>, "error": null }`
 | Method | Path                  | Auth      | Handler                   | Request Body                | Response Data     |
 | ------ | --------------------- | --------- | ------------------------- | --------------------------- | ----------------- |
 | GET    | `/health`             | Public    | inline                    | —                           | `{status: "ok"}`  |
-| POST   | `/auth/signup`        | Public    | `AuthHandler.Signup`      | `{email, password}`         | `{token, user}`   |
-| POST   | `/auth/login`         | Public    | `AuthHandler.Login`       | `{email, password}`         | `{token, user}`   |
-| GET    | `/pages/sidebar`      | Protected | `PageHandler.GetSidebar`  | —                           | `[PageNode...]`   |
-| POST   | `/pages`              | Protected | `PageHandler.CreatePage`  | `{parentId?, title}`        | `Page`            |
-| GET    | `/pages/{id}`         | Protected | `PageHandler.GetPage`     | —                           | `Page`            |
-| PATCH  | `/pages/{id}`         | Protected | `PageHandler.UpdatePage`  | `{title?, icon?, content?}` | `Page`            |
-| DELETE | `/pages/{id}`         | Protected | `PageHandler.DeletePage`  | —                           | `{success: true}` |
-| GET    | `/pages/search`       | Protected | `PageHandler.SearchPages` | —                           | `[PageSearchResult...]` |
-| GET    | `/pages/trash`        | Protected | `PageHandler.GetTrash`    | —                           | `[PageTrashItem...]` |
-| PATCH  | `/pages/{id}/restore` | Protected | `PageHandler.RestorePage` | —                           | `{success: true}` |
-| DELETE | `/pages/{id}/permanent` | Protected | `PageHandler.DeletePagePermanently` | —             | `{success: true}` |
-| PATCH  | `/auth/account/email` | Protected | `AuthHandler.UpdateAccountEmail` | `{currentPassword, newEmail}` | `User` |
-| PATCH  | `/auth/account/password` | Protected | `AuthHandler.UpdateAccountPassword` | `{currentPassword, newPassword}` | `{success: true}` |
-| POST   | `/pages/{id}/assets`  | Protected | `PageHandler.UploadAsset` | `multipart form-data`      | `{url, contentType, size, name}` |
-| PUT    | `/pages/{id}/content` | Protected | `PageHandler.SaveContent` | `[BlockNote JSON array]`    | `Page`            |
-| GET    | `/pages/{id}/content` | Protected | `PageHandler.GetContent`  | —                           | `content (JSON)`  |
+| POST   | `/api/auth/signup`        | Public    | `AuthHandler.Signup`      | `{email, password}`         | `{token, user}`   |
+| POST   | `/api/auth/login`         | Public    | `AuthHandler.Login`       | `{email, password}`         | `{token, user}`   |
+| GET    | `/api/pages/sidebar`      | Protected | `PageHandler.GetSidebar`  | —                           | `[PageNode...]`   |
+| POST   | `/api/pages`              | Protected | `PageHandler.CreatePage`  | `{parentId?, title}`        | `Page`            |
+| GET    | `/api/pages/{id}`         | Protected | `PageHandler.GetPage`     | —                           | `Page`            |
+| PATCH  | `/api/pages/{id}`         | Protected | `PageHandler.UpdatePage`  | `{title?, icon?, content?}` | `Page`            |
+| DELETE | `/api/pages/{id}`         | Protected | `PageHandler.DeletePage`  | —                           | `{success: true}` |
+| GET    | `/api/pages/search`       | Protected | `PageHandler.SearchPages` | —                           | `[PageSearchResult...]` |
+| GET    | `/api/pages/trash`        | Protected | `PageHandler.GetTrash`    | —                           | `[PageTrashItem...]` |
+| PATCH  | `/api/pages/{id}/restore` | Protected | `PageHandler.RestorePage` | —                           | `{success: true}` |
+| DELETE | `/api/pages/{id}/permanent` | Protected | `PageHandler.DeletePagePermanently` | —             | `{success: true}` |
+| PATCH  | `/api/auth/account/email` | Protected | `AuthHandler.UpdateAccountEmail` | `{currentPassword, newEmail}` | `User` |
+| PATCH  | `/api/auth/account/password` | Protected | `AuthHandler.UpdateAccountPassword` | `{currentPassword, newPassword}` | `{success: true}` |
+| POST   | `/api/pages/{id}/assets`  | Protected | `PageHandler.UploadAsset` | `multipart form-data`      | `{url, contentType, size, name}` |
+| PUT    | `/api/pages/{id}/content` | Protected | `PageHandler.SaveContent` | `[BlockNote JSON array]`    | `Page`            |
+| GET    | `/api/pages/{id}/content` | Protected | `PageHandler.GetContent`  | —                           | `content (JSON)`  |
 
 ---
 
@@ -368,22 +368,22 @@ Create separate JSON files in `tests/fixtures/` for each API endpoint that requi
 
 | Fixture File                                  | API Endpoint              | Description                                 |
 | --------------------------------------------- | ------------------------- | ------------------------------------------- |
-| `tests/fixtures/auth-signup.json`             | `POST /auth/signup`       | Valid signup body                           |
-| `tests/fixtures/auth-signup-invalid.json`     | `POST /auth/signup`       | Missing password, short password, bad email |
-| `tests/fixtures/auth-login.json`              | `POST /auth/login`        | Valid login body                            |
-| `tests/fixtures/auth-login-invalid.json`      | `POST /auth/login`        | Wrong password, missing fields              |
-| `tests/fixtures/page-create.json`             | `POST /pages`             | Create root page                            |
-| `tests/fixtures/page-create-child.json`       | `POST /pages`             | Create child page (with `parentId`)         |
-| `tests/fixtures/page-update-title.json`       | `PATCH /pages/{id}`       | Update only title                           |
-| `tests/fixtures/page-update-icon.json`        | `PATCH /pages/{id}`       | Update only icon                            |
-| `tests/fixtures/page-update-content.json`     | `PATCH /pages/{id}`       | Update only content (BlockNote JSON)        |
-| `tests/fixtures/page-update-multiple.json`    | `PATCH /pages/{id}`       | Update title + icon + content together      |
-| `tests/fixtures/page-save-content.json`       | `PUT /pages/{id}/content` | Save BlockNote blocks array                 |
-| `tests/fixtures/page-save-content-empty.json` | `PUT /pages/{id}/content` | Save empty content `[]`                     |
-| `tests/fixtures/auth-account-email.json`      | `PATCH /auth/account/email` | Update account email                      |
-| `tests/fixtures/auth-account-email-invalid.json` | `PATCH /auth/account/email` | Invalid account email                  |
-| `tests/fixtures/auth-account-password.json`   | `PATCH /auth/account/password` | Update account password               |
-| `tests/fixtures/auth-account-password-invalid.json` | `PATCH /auth/account/password` | Invalid account password        |
+| `tests/fixtures/auth-signup.json`             | `POST /api/api/auth/signup`       | Valid signup body                           |
+| `tests/fixtures/auth-signup-invalid.json`     | `POST /api/api/auth/signup`       | Missing password, short password, bad email |
+| `tests/fixtures/auth-login.json`              | `POST /api/api/auth/login`        | Valid login body                            |
+| `tests/fixtures/auth-login-invalid.json`      | `POST /api/api/auth/login`        | Wrong password, missing fields              |
+| `tests/fixtures/page-create.json`             | `POST /api/api/pages`             | Create root page                            |
+| `tests/fixtures/page-create-child.json`       | `POST /api/api/pages`             | Create child page (with `parentId`)         |
+| `tests/fixtures/page-update-title.json`       | `PATCH /api/api/pages/{id}`       | Update only title                           |
+| `tests/fixtures/page-update-icon.json`        | `PATCH /api/api/pages/{id}`       | Update only icon                            |
+| `tests/fixtures/page-update-content.json`     | `PATCH /api/api/pages/{id}`       | Update only content (BlockNote JSON)        |
+| `tests/fixtures/page-update-multiple.json`    | `PATCH /api/api/pages/{id}`       | Update title + icon + content together      |
+| `tests/fixtures/page-save-content.json`       | `PUT /api/api/pages/{id}/content` | Save BlockNote blocks array                 |
+| `tests/fixtures/page-save-content-empty.json` | `PUT /api/api/pages/{id}/content` | Save empty content `[]`                     |
+| `tests/fixtures/auth-account-email.json`      | `PATCH /api/api/auth/account/email` | Update account email                      |
+| `tests/fixtures/auth-account-email-invalid.json` | `PATCH /api/api/auth/account/email` | Invalid account email                  |
+| `tests/fixtures/auth-account-password.json`   | `PATCH /api/api/auth/account/password` | Update account password               |
+| `tests/fixtures/auth-account-password-invalid.json` | `PATCH /api/api/auth/account/password` | Invalid account password        |
 
 ---
 
@@ -423,18 +423,18 @@ Create separate JSON files in `tests/fixtures/` for each API endpoint that requi
 tests/
 ├── README.md                              # Test overview, how to run, curl examples
 ├── fixtures/
-│   ├── auth-signup.json                   # POST /auth/signup — valid
-│   ├── auth-signup-invalid.json           # POST /auth/signup — error cases
-│   ├── auth-login.json                    # POST /auth/login — valid
-│   ├── auth-login-invalid.json            # POST /auth/login — error cases
-│   ├── page-create.json                   # POST /pages — root page
-│   ├── page-create-child.json             # POST /pages — child page
-│   ├── page-update-title.json             # PATCH /pages/{id} — title only
-│   ├── page-update-icon.json              # PATCH /pages/{id} — icon only
-│   ├── page-update-content.json           # PATCH /pages/{id} — content (BlockNote)
-│   ├── page-update-multiple.json          # PATCH /pages/{id} — multiple fields
-│   ├── page-save-content.json             # PUT /pages/{id}/content — blocks array
-│   └── page-save-content-empty.json       # PUT /pages/{id}/content — empty []
+│   ├── auth-signup.json                   # POST /api/api/auth/signup — valid
+│   ├── auth-signup-invalid.json           # POST /api/api/auth/signup — error cases
+│   ├── auth-login.json                    # POST /api/api/auth/login — valid
+│   ├── auth-login-invalid.json            # POST /api/api/auth/login — error cases
+│   ├── page-create.json                   # POST /api/api/pages — root page
+│   ├── page-create-child.json             # POST /api/api/pages — child page
+│   ├── page-update-title.json             # PATCH /api/api/pages/{id} — title only
+│   ├── page-update-icon.json              # PATCH /api/api/pages/{id} — icon only
+│   ├── page-update-content.json           # PATCH /api/api/pages/{id} — content (BlockNote)
+│   ├── page-update-multiple.json          # PATCH /api/api/pages/{id} — multiple fields
+│   ├── page-save-content.json             # PUT /api/api/pages/{id}/content — blocks array
+│   └── page-save-content-empty.json       # PUT /api/api/pages/{id}/content — empty []
 └── backend-unit-tests.md                  # Generated test plan documentation
 ```
 

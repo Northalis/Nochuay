@@ -62,7 +62,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 
 ### Frontend (.env.local)
 
-NEXT_PUBLIC_API_URL=http://localhost:8080/
+NEXT_PUBLIC_API_URL=http://localhost:8080/apiapi/
 
 ---
 
@@ -214,20 +214,20 @@ All responses must follow this wrapper format:
 
 | Method | Endpoint       | Description                   | Request Body             | Response Data             |
 | ------ | -------------- | ----------------------------- | ------------------------ | ------------------------- |
-| POST   | /auth/signup   | Register user                 | "{email, password}"      | "{token, user}"           |
-| POST   | /auth/login    | Login user                    | "{email, password}"      | "{token, user}"           |
-| PATCH  | /auth/account/email | Update account email     | "{currentPassword, newEmail}" | User            |
-| PATCH  | /auth/account/password | Update account password | "{currentPassword, newPassword}" | {success: true} |
-| GET    | /pages/sidebar | Critical: Returns nested tree | -                        | "[PageNode, PageNode...]" |
-| GET    | /pages/search  | Search pages by title         | -                        | "[PageSearchResult...]"   |
-| POST   | /pages         | Create new page               | "{parentId, title}"      | Page                      |
-| GET    | /pages/:id     | Get page details              | -                        | Page                      |
-| PATCH  | /pages/:id     | Update properties             | "{title, icon, content}" | Page                      |
-| DELETE | /pages/:id     | Move page subtree to Trash    | -                        | {success: true}           |
-| GET    | /pages/trash   | List trashed pages            | -                        | "[PageTrashItem...]"      |
-| PATCH  | /pages/:id/restore | Restore trashed subtree   | -                        | {success: true}           |
-| DELETE | /pages/:id/permanent | Permanently delete subtree | -                   | {success: true}           |
-| POST   | /pages/:id/assets | Upload page asset         | multipart form-data      | Asset metadata            |
+| POST   | /api/auth/signup   | Register user                 | "{email, password}"      | "{token, user}"           |
+| POST   | /api/auth/login    | Login user                    | "{email, password}"      | "{token, user}"           |
+| PATCH  | /api/auth/account/email | Update account email     | "{currentPassword, newEmail}" | User            |
+| PATCH  | /api/auth/account/password | Update account password | "{currentPassword, newPassword}" | {success: true} |
+| GET    | /api/pages/sidebar | Critical: Returns nested tree | -                        | "[PageNode, PageNode...]" |
+| GET    | /api/pages/search  | Search pages by title         | -                        | "[PageSearchResult...]"   |
+| POST   | /api/pages         | Create new page               | "{parentId, title}"      | Page                      |
+| GET    | /api/pages/:id     | Get page details              | -                        | Page                      |
+| PATCH  | /api/pages/:id     | Update properties             | "{title, icon, content}" | Page                      |
+| DELETE | /api/pages/:id     | Move page subtree to Trash    | -                        | {success: true}           |
+| GET    | /api/pages/trash   | List trashed pages            | -                        | "[PageTrashItem...]"      |
+| PATCH  | /api/pages/:id/restore | Restore trashed subtree   | -                        | {success: true}           |
+| DELETE | /api/pages/:id/permanent | Permanently delete subtree | -                   | {success: true}           |
+| POST   | /api/pages/:id/assets | Upload page asset         | multipart form-data      | Asset metadata            |
 
 ---
 

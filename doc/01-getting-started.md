@@ -51,7 +51,7 @@ MAX_UPLOAD_SIZE_BYTES=10485760
 Create the file `nochuay-front/.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
 > **Security:** Never commit `.env` or `.env.local` files to version control. They are listed in `.gitignore`.
@@ -88,7 +88,7 @@ nochuay_api  | Nochuay API server starting on :8080
 ### Health Check
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8080/api/health
 ```
 
 Expected response:
@@ -107,7 +107,7 @@ Navigate to [http://localhost:3000](http://localhost:3000) in your browser. You 
 ### Register a Test User
 
 ```bash
-curl -X POST http://localhost:8080/auth/signup \
+curl -X POST http://localhost:8080/api/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "password123"}'
 ```
