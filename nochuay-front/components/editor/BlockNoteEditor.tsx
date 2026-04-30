@@ -77,7 +77,7 @@ function toAbsoluteAssetURL(pathOrURL: string): string {
     return pathOrURL;
   }
 
-  const normalizedBase = API_BASE.replace(/\/api\/?$/, "").replace(/\/$/, "");
+  const normalizedBase = API_BASE.replace(/\/$/, "");
   const normalizedPath = pathOrURL.startsWith("/")
     ? pathOrURL
     : `/${pathOrURL}`;
